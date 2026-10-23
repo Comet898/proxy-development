@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browser</title>
+<style>
+  :root { color-scheme: light dark; --bg:#ffffff; --surf:#f2f3f6; --tabbar:#e4e7ed; --fg:#171a20; --mut:#667085; --bd:#d8dce4; --ac:#2f5fe8; --ok:#1f9d57; --bad:#d64545; --warn:#c48a10; --sh:0 10px 30px rgba(15,20,35,.18); }
+  @media (prefers-color-scheme: dark) { :root { --bg:#181b21; --surf:#222630; --tabbar:#0f1115; --fg:#e8ebf1; --mut:#98a1b3; --bd:#2f3541; --ac:#7a9bff; --ok:#43c37b; --bad:#ff7a7a; --warn:#e0b04a; --sh:0 10px 30px rgba(0,0,0,.5); } }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  button, input, select { font: inherit; color: inherit; }
+  svg { display: block; }
+  /* tab strip */
+  #tabs { display: flex; align-items: flex-end; gap: 2px; padding: 8px 8px 0; background: var(--tabbar); }
+  #tablist { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .tab { display: flex; align-items: center; gap: 8px; width: 200px; flex: 0 0 auto; height: 34px; padding: 0 8px 0 14px; border-radius: 9px 9px 0 0; cursor: pointer; color: var(--mut); transition: background .12s; }
+  .tab:hover { background: color-mix(in srgb, var(--bg) 45%, transparent); }
+  .tab.on { background: var(--bg); color: var(--fg); }
+  .tab span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+  .tab b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: var(--mut); }
+  .tab b:hover { background: var(--bd); color: var(--fg); }
+  #newtab { width: 30px; height: 30px; margin: 0 0 3px 4px; }
+  /* toolbar */
+  #toolbar { display: flex; align-items: center; gap: 4px; padding: 7px 10px; background: var(--bg); border-bottom: 1px solid var(--bd); position: relative; }
+  .ib { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--fg); cursor: pointer; flex: none; }
+  .ib:hover:not(:disabled) { background: var(--surf); }
+  .ib:disabled { opacity: .35; cursor: default; }
+  #omni { flex: 1; min-width: 0; height: 36px; margin: 0 6px; padding: 0 16px; border: 1px solid transparent; border-radius: 18px; background: var(--surf); outline: none; }
+  #omni:focus { border-color: var(--ac); background: var(--bg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 22%, transparent); }
+  #pill { display: flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; margin-right: 4px; border-radius: 14px; background: var(--surf); color: var(--mut); font-size: 12px; white-space: nowrap; cursor: default; }
+  #pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--mut); }
+  #pill.ok i { background: var(--ok); } #pill.bad i { background: var(--bad); } #pill.chk i { background: var(--warn); }
+  /* settings popover */
+  #settings { max-height: calc(100vh - 70px); overflow-y: auto; position: absolute; right: 10px; top: 52px; z-index: 20; width: min(360px, calc(100% - 20px)); padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); border: 1px solid var(--bd); border-radius: 12px; box-shadow: var(--sh); }
+  #settings[hidden] { display: none; }
+  #settings h3 { margin: 0; font-size: 15px; }
+  #settings label { display: flex; flex-direction: column; gap: 5px; color: var(--mut); font-size: 12px; }
+  #settings label.chk { flex-direction: row; align-items: center; gap: 6px; }
+  #settings textarea { padding: 8px 10px; color: var(--fg); background: var(--surf); border: 1px solid var(--bd); border-radius: 8px; outline: none; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; resize: vertical; }
+  #settings input[type=checkbox] { height: auto; }
+  #settings input, #settings select { height: 34px; padding: 0 10px; color: var(--fg); background: var(--surf); border: 1px solid var(--bd); border-radius: 8px; outline: none; }
+  #settings input:focus, #settings select:focus { border-color: var(--ac); }
+  #settings .row { display: flex; align-items: center; gap: 10px; }
+  .btn { height: 32px; padding: 0 14px; border: 1px solid var(--bd); border-radius: 8px; background: var(--surf); cursor: pointer; }
+  .btn:hover { border-color: var(--ac); }
+  #wispnote, .hint { color: var(--mut); font-size: 12px; margin: 0; }
+  #status { padding: 3px 14px; font-size: 12px; color: var(--mut); background: var(--surf); border-bottom: 1px solid var(--bd); }
+  #status:empty { display: none; }
+  /* content */
+  #stage { position: relative; flex: 1; min-height: 0; background: var(--bg); }
+  .page { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+  .page[hidden], #ntp[hidden] { display: none; }
+  #ntp { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; }
+  #ntp h1 { margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -.01em; }
+  #ntpq { width: min(580px, 100%); height: 48px; padding: 0 22px; font-size: 16px; border: 1px solid var(--bd); border-radius: 24px; background: var(--surf); outline: none; }
+  #ntpq:focus { border-color: var(--ac); background: var(--bg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 22%, transparent); }
+  #quick { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  #quick button { height: 36px; padding: 0 16px; border: 1px solid var(--bd); border-radius: 18px; background: var(--bg); cursor: pointer; }
+  #quick button:hover { border-color: var(--ac); color: var(--ac); }
+  #stage:fullscreen { background: #000; }
+  body.embed #tabs, body.embed #toolbar, body.embed #status, body.embed #ntp { display: none !important; }
+  @media (max-width: 640px) { #pill span { display: none; } .tab { width: 150px; } }
+</style>
+</head>
+<body>
+<div id="tabs"><div id="tablist"></div><button id="newtab" class="ib" title="New tab" aria-label="New tab"></button></div>
+<div id="toolbar">
+  <button id="back" class="ib" title="Back" aria-label="Back" disabled></button>
+  <button id="fwd" class="ib" title="Forward" aria-label="Forward" disabled></button>
+  <button id="reload" class="ib" title="Reload" aria-label="Reload"></button>
+  <button id="home" class="ib" title="New tab page" aria-label="Home"></button>
+  <input id="omni" type="text" placeholder="Search or enter address" autocomplete="off" spellcheck="false" autofocus>
+  <div id="pill" class="chk" title="Checking connection"><i></i><span>Checking</span></div>
+  <button id="full" class="ib" title="Fullscreen" aria-label="Fullscreen"></button>
+  <button id="gear" class="ib" title="Settings" aria-label="Settings"></button>
+  <div id="settings" hidden>
+    <h3>Settings</h3>
+    <label>Search engine <select id="engine"></select></label>
+    <label>Engine <select id="mode"><option value="auto">Auto</option><option value="sj">Scramjet (best compatibility, needs https or localhost)</option><option value="sw">Lite service worker (needs localhost or https)</option><option value="hosted">Hosted engine (your GitHub Pages link)</option><option value="direct">Single-file (works from file://)</option></select></label>
+    <label class="chk"><input id="guard" type="checkbox"> Ask before closing or leaving this tab</label>
+    <label>Transport <select id="transport"><option value="libcurl">libcurl</option><option value="epoxy">epoxy</option></select></label>
+    <label>Preferred Wisp server <input id="wisp" type="text" placeholder="wss://your-server.onrender.com/" spellcheck="false"></label>
+    <label>Fallback servers, one per line <textarea id="wisplist" rows="5" spellcheck="false"></textarea></label>
+    <div class="row"><button id="testwisp" class="btn">Test connection</button><span id="wispnote"></span></div>
+    <label>GitHub Pages link <input id="hosted" type="text" placeholder="https://name.github.io/repo/" spellcheck="false"></label>
+    <div class="row"><button id="openhosted" class="btn">Open hosted version</button></div>
+    <p class="hint">Paste the link to your GitHub Pages site. Opened from a file, this page then runs the engine from that link in the background.</p>
+    <p class="hint">If the preferred server is unreachable, the fallback servers are tried at the same time and the first to answer is used. Public servers are run by volunteers and go offline a lot. Most reliable: deploy the included wisp-server folder and paste its wss:// address in the first box.</p>
+  </div>
+</div>
+<div id="status"></div>
+<div id="stage">
+  <div id="ntp"><h1>Search the web</h1><input id="ntpq" type="text" placeholder="Search or enter address" autocomplete="off"><div id="quick"></div></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const ICON = {
+  back: '<path d="M15 6l-6 6 6 6"/>', fwd: '<path d="M9 6l6 6-6 6"/>',
+  reload: '<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/>',
+  home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',
+  gear: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', close: '<path d="M7 7l10 10M17 7L7 17"/>'
+};
+const svg = (n, s) => '<svg viewBox="0 0 24 24" width="' + (s || 18) + '" height="' + (s || 18) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + '</svg>';
+for (const [id, n] of [["back", "back"], ["fwd", "fwd"], ["reload", "reload"], ["home", "home"], ["gear", "gear"], ["full", "full"], ["newtab", "plus"]]) $(id).innerHTML = svg(n);
+
+const ENGINES = {
+  ddg: ["DuckDuckGo", "https://html.duckduckgo.com/html/?q="], bing: ["Bing", "https://www.bing.com/search?q="],
+  google: ["Google", "https://www.google.com/search?q="], brave: ["Brave", "https://search.brave.com/search?q="]
+};
+const DEFAULT_WISPS = ["wss://wisp.rhw.one/wisp", "wss://pgis-wisp.onrender.com/", "wss://pgis-wisp-2.onrender.com/", "wss://wisp.mercurywork.shop/"];
+const normW = u => { u = (u || "").trim(); return u && !u.endsWith("/") ? u + "/" : u; };
+const wispList = () => $("wisplist").value.split(/\s+/).filter(x => /^wss?:\/\//i.test(x)).map(normW);
+const wispVal = () => normW($("wisp").value) || wispList()[0] || "";
+const tmo = (ms, msg) => new Promise((_, rej) => setTimeout(() => rej(new Error(msg)), ms));
+const QUICK = [["Wikipedia", "https://en.wikipedia.org/"], ["DuckDuckGo", "https://html.duckduckgo.com/html/"], ["itch.io games", "https://itch.io/games/html5"], ["Internet Archive", "https://archive.org/"]];
+const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const PREFIX = new URL("service/", location.href).pathname;
+const EMBED = new URLSearchParams(location.search).has("embed");
+if (EMBED) document.body.classList.add("embed");
+let tabs = [], active = null, seq = 0, activeWisp = null, useDirect = false, curWisp = null;
+
+for (const [k, v] of Object.entries(ENGINES)) $("engine").add(new Option(v[0], k));
+$("engine").value = store.get("engine", "ddg");
+$("wisp").value = store.get("wisp2", "");
+$("transport").value = store.get("transport", "libcurl");
+$("mode").value = store.get("mode", "auto");
+$("wisplist").value = store.get("wisplist2", DEFAULT_WISPS.join("\n"));
+$("hosted").value = store.get("hosted", "");
+$("wisplist").onchange = () => { store.set("wisplist2", $("wisplist").value); curWisp = null; };
+$("hosted").onchange = () => store.set("hosted", $("hosted").value.trim());
+const hostedURL = () => {
+  try {
+    const u = new URL($("hosted").value.trim());
+    if (!(u.protocol === "https:" || (u.protocol === "http:" && /^(localhost|127\.0\.0\.1)$/.test(u.hostname)))) return "";
+    if (!u.pathname.endsWith("/") && !/\.[a-z]+$/i.test(u.pathname)) u.pathname += "/";
+    return u.href;
+  } catch (e) { return ""; }
+};
+$("openhosted").onclick = () => { const h = hostedURL(); if (h) { noGuard = true; location.href = h; } else $("wispnote").textContent = "Enter a valid https link first"; };
+$("engine").onchange = () => store.set("engine", $("engine").value);
+$("wisp").onchange = () => { store.set("wisp2", wispVal()); curWisp = null; };
+$("transport").onchange = () => { store.set("transport", $("transport").value); sjKey = ""; };
+$("mode").onchange = () => { store.set("mode", $("mode").value); modeNote(); };
+let noGuard = false;
+$("guard").checked = store.get("guard", "1") === "1";
+$("guard").onchange = () => store.set("guard", $("guard").checked ? "1" : "0");
+window.addEventListener("beforeunload", e => { if (EMBED || noGuard || !$("guard").checked) return; e.preventDefault(); e.returnValue = ""; });
+$("gear").onclick = e => { e.stopPropagation(); $("settings").hidden = !$("settings").hidden; };
+document.addEventListener("click", e => { if (!$("settings").hidden && !$("settings").contains(e.target)) $("settings").hidden = true; });
+window.addEventListener("blur", () => { $("settings").hidden = true; });
+for (const [label, url] of QUICK) { const b = document.createElement("button"); b.textContent = label; b.onclick = () => go(active, url); $("quick").append(b); }
+
+/* address bar text -> URL or search */
+function resolve(q) {
+  q = q.trim(); if (!q) return "";
+  if (/^https?:\/\//i.test(q)) return q;
+  if (/^(localhost|\d{1,3}(\.\d{1,3}){3})(:\d+)?([\/?#].*)?$/i.test(q)) return "http://" + q;
+  if (/^[^\s\/?#]+\.[a-z]{2,}(:\d+)?([\/?#]\S*)?$/i.test(q)) return "https://" + q;
+  return ENGINES[$("engine").value][1] + encodeURIComponent(q);
+}
+
+/* Wisp: check the configured server, fall back to others if it is down */
+function setPill(cls, text, title) { $("pill").className = cls; $("pill").lastChild.textContent = text; $("pill").title = title || text; }
+function probe(url, ms) {
+  return new Promise(res => {
+    let ws, done = false;
+    const fin = v => { if (done) return; done = true; try { ws.close(); } catch (e) {} res(v); };
+    try { ws = new WebSocket(url); } catch (e) { return res(false); }
+    ws.binaryType = "arraybuffer"; ws.onmessage = () => fin(true); ws.onerror = () => fin(false); ws.onclose = () => fin(false);
+    setTimeout(() => fin(false), ms || 6000);
+  });
+}
+let wispFailAt = 0;
+async function resolveWisp() {
+  const want = wispVal();
+  if (curWisp && curWisp.want === want) return curWisp.use;
+  if (new URLSearchParams(location.search).has("libcurl")) { curWisp = { want, use: want }; setPill("ok", "Test mode"); return want; }
+  if (Date.now() - wispFailAt < 60000) return want;
+  setPill("chk", "Checking", "Checking " + want);
+  if (await probe(want, 8000)) { curWisp = { want, use: want }; setPill("ok", "Connected", "Wisp: " + want); return want; }
+  const others = wispList().filter(x => x !== want);
+  const win = await new Promise(res => {
+    let left = others.length; if (!left) return res(null);
+    others.forEach(w => probe(w, 10000).then(ok => { if (ok) res(w); else if (--left === 0) res(null); }));
+  });
+  if (win) { curWisp = { want, use: win }; setPill("ok", "Fallback server", "Wisp: " + win); return win; }
+  wispFailAt = Date.now();
+  setPill("chk", "Unverified", "Could not confirm any Wisp server from this page. Browsing is still attempted with " + want + ".");
+  return want;
+}
+$("testwisp").onclick = async () => {
+  curWisp = null; wispFailAt = 0; $("wispnote").textContent = "Testing...";
+  const w = await resolveWisp();
+  wispFailAt = 0; $("wispnote").textContent = $("pill").className === "ok" ? "Using " + w : "Could not confirm a server";
+};
+
+/* service worker */
+async function boot(wisp) {
+  if (!("serviceWorker" in navigator) || !window.isSecureContext)
+    throw new Error("Service workers need http://localhost or https. Run: python3 -m http.server 8080 in this folder, then open http://localhost:8080");
+  if (wisp === activeWisp) return;
+  const qs = new URLSearchParams(location.search), extra = {};
+  for (const k of ["libcurl", "acorn"]) if (qs.has(k)) extra[k] = qs.get(k);
+  const reg = await navigator.serviceWorker.register("sw.js?" + new URLSearchParams({ wisp, ...extra }), { scope: "./" });
+  const sw = reg.installing || reg.waiting || reg.active;
+  if (sw.state !== "activated") await new Promise(r => sw.addEventListener("statechange", () => sw.state === "activated" && r()));
+  activeWisp = wisp;
+}
+/* keep the worker (and its Wisp connection) alive during long sessions such as games */
+setInterval(() => { if (activeWisp) fetch(new URL("service/__ping", location.href)).catch(() => {}); }, 20000);
+
+/* ---------- Scramjet engine (service worker in sj/, needs https or localhost) ---------- */
+const loadJs = src => new Promise((res, rej) => { const e = document.createElement("script"); e.src = src; e.onload = res; e.onerror = () => rej(new Error("Could not load " + src + ". Upload the whole sj folder next to index.html.")); document.head.appendChild(e); });
+let sjC = null, sjConn = null, sjKey = "", sjBad = false;
+async function bootSJ(wisp) {
+  if (!swOK()) throw new Error("Scramjet needs https or http://localhost. Host this folder on GitHub Pages, or run: python3 -m http.server 8080");
+  const base = new URL("sj/", location.href).pathname;
+  if (!sjC) {
+    await loadJs(base + "scramjet.all.js"); await loadJs(base + "baremux/index.js");
+    const { ScramjetController } = $scramjetLoadController();
+    const c = new ScramjetController({ prefix: base + "service/",
+      files: { wasm: base + "scramjet.wasm.wasm", all: base + "scramjet.all.js", sync: base + "scramjet.sync.js" },
+      flags: { cleanErrors: true, allowInvalidJs: true, allowFailedIntercepts: true } });
+    await c.init();
+    const reg = await navigator.serviceWorker.register(base + "sw.js", { scope: base });
+    const sw = reg.installing || reg.waiting || reg.active;
+    if (sw.state !== "activated") await new Promise(r => sw.addEventListener("statechange", () => sw.state === "activated" && r()));
+    sjConn = new BareMux.BareMuxConnection(base + "baremux/worker.js");
+    sjC = c;
+  }
+  const tr = $("transport").value, key = tr + "|" + wisp;
+  if (key !== sjKey) { await sjConn.setTransport(base + "transport/" + tr + ".mjs", [{ wisp, websocket: wisp }]); sjKey = key; }
+}
+async function goSJ(t, url) {
+  t.sj = true; t.direct = false; t.hosted = false; t.url = url; t.title = "Loading...";
+  if (t === active) { $("omni").value = url; $("ntp").hidden = true; t.frame.hidden = false; }
+  render(); $("status").textContent = "Starting Scramjet ...";
+  try {
+    const want = wispVal();
+    const w = await Promise.race([resolveWisp(), new Promise(r => setTimeout(() => r(want), 4000))]);
+    await Promise.race([bootSJ(w), tmo(20000, "Scramjet took too long to start")]);
+  } catch (e) {
+    if ($("mode").value === "auto") { sjBad = true; t.sj = false; $("status").textContent = "Scramjet failed (" + e.message + "), using the lite engine"; return go(t, url); }
+    t.title = "Error"; render(); $("status").textContent = "Error: " + e.message; return;
+  }
+  if (!t.sjf) {
+    t.sjf = sjC.createFrame(t.frame);
+    t.sjf.addEventListener("urlchange", e => { t.url = e.url; if (t === active && document.activeElement !== $("omni")) $("omni").value = t.url; });
+  }
+  t.frame.removeAttribute("srcdoc");
+  $("status").textContent = "Loading " + url;
+  t.frame.addEventListener("load", () => { if (t === active) $("status").textContent = ""; }, { once: true });
+  t.sjf.go(url); navState();
+}
+
+/* tabs */
+function newTab(input) {
+  const f = document.createElement("iframe");
+  f.className = "page"; f.title = "page"; f.hidden = true;
+  f.setAttribute("allow", "fullscreen; autoplay; gamepad; clipboard-write; web-share");
+  $("stage").appendChild(f);
+  const t = { id: ++seq, title: "New Tab", url: "", frame: f, hist: [], i: -1, direct: false };
+  tabs.push(t); select(t);
+  if (input) go(t, input); else { $("omni").value = ""; $("omni").focus(); }
+  return t;
+}
+function select(t) {
+  active = t;
+  for (const x of tabs) x.frame.hidden = x !== t || !x.url;
+  $("ntp").hidden = !!t.url;
+  if (document.activeElement !== $("omni") || !t.url) $("omni").value = t.url;
+  render(); navState();
+}
+function closeTab(t) {
+  const i = tabs.indexOf(t); tabs.splice(i, 1); t.frame.remove();
+  if (!tabs.length) return newTab();
+  if (active === t) select(tabs[Math.min(i, tabs.length - 1)]); else render();
+}
+function render() {
+  const list = $("tablist"); list.textContent = "";
+  for (const t of tabs) {
+    const d = document.createElement("div"); d.className = "tab" + (t === active ? " on" : ""); d.title = t.title;
+    const s = document.createElement("span"); s.textContent = t.title;
+    const x = document.createElement("b"); x.innerHTML = svg("close", 12); x.title = "Close tab";
+    x.onclick = e => { e.stopPropagation(); closeTab(t); };
+    d.onclick = () => select(t); d.append(s, x); list.append(d);
+  }
+}
+function modeNote() {
+  const m = $("mode").value;
+  $("status").textContent = (engineFor() === "direct")
+    ? "Single-file mode: pages, scripts, styles and images all load through the proxy. No server needed." : engineFor() === "sj" ? "Scramjet engine" : "";
+}
+const swOK = () => "serviceWorker" in navigator && window.isSecureContext && /^https?:$/.test(location.protocol);
+
+function engineFor() {
+  const m = $("mode").value;
+  if (m === "direct") return "direct";
+  if (m === "hosted") return hostedURL() ? "hosted" : "direct";
+  if (m === "sj") return "sj";
+  if (m === "sw") return "sw";
+  return useDirect ? "direct" : swOK() ? (sjBad ? "sw" : "sj") : hostedURL() ? "hosted" : "direct";
+}
+async function go(t, input, push = true, opts) {
+  const url = resolve(input); if (!url) return;
+  const m = $("mode").value, eng = engineFor();
+  if (eng === "sj") return goSJ(t, url);
+  if (eng === "hosted" && !EMBED) return goHosted(t, url);
+  t.hosted = false; t.ready = false;
+  let direct = (!push && t.direct) || eng === "direct";
+  if (!direct) {
+    try {
+      const want = wispVal();
+      const w = await Promise.race([resolveWisp(), new Promise(r => setTimeout(() => r(want), 3000))]);
+      await boot(w);
+      /* load libcurl in the page too: proxied pages use it for WebSockets */
+      await Promise.race([loadLibcurl().then(() => { if (directWisp !== w) { libcurl.set_websocket(w); directWisp = w; } }), new Promise(r => setTimeout(r, 8000))]).catch(() => {});
+    } catch (e) { if (m === "auto") { useDirect = true; direct = true; } else { $("status").textContent = "Error: " + e.message; return; } }
+  }
+  if (direct) return goDirect(t, url, push, opts);
+  t.direct = false; t.url = url; t.title = "Loading...";
+  if (t === active) { $("omni").value = url; $("ntp").hidden = true; t.frame.hidden = false; }
+  render(); $("status").textContent = "Loading " + url;
+  t.frame.removeAttribute("srcdoc");
+  t.frame.src = new URL("service/" + encodeURIComponent(url), location.href).href;
+  t.frame.onload = () => { if (t === active) $("status").textContent = ""; };
+}
+
+/* ---------- single-file engine: libcurl.js in this page + srcdoc (works from file://) ---------- */
+let lcP = null, directWisp = null;
+function loadLibcurl() {
+  if (lcP) return lcP;
+  lcP = new Promise((res, rej) => {
+    if (window.libcurl && libcurl.ready) return res();
+    document.addEventListener("libcurl_load", () => res(), { once: true });
+    const s = document.createElement("script");
+    s.src = new URLSearchParams(location.search).get("libcurl") || "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.1/libcurl_full.js";
+    s.onload = () => { if (window.libcurl && libcurl.ready) res(); };
+    s.onerror = () => { lcP = null; rej(new Error("Could not load libcurl.js from the CDN")); };
+    document.head.appendChild(s);
+  });
+  return lcP;
+}
+const esc = x => String(x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* script injected into every page: routes fetch/XHR/links/forms through libcurl */
+function directShim(base, id) {
+return '(function(){var B='+JSON.stringify(base)+',P=parent,T='+id+';'+
+'function abs(u){try{return new URL(u,B).href}catch(e){return u}}'+
+'function nav(u,o,b){P.tabNav(T,u,o,b)}'+
+'window.fetch=function(i,o){var u=(i&&i.url)?i.url:String(i);if(i&&i.url&&!o)o={method:i.method,headers:i.headers};return P.libcurl.fetch(abs(u),o)};'+
+'function fire(x,t){var e={type:t,target:x};if(typeof x["on"+t]==="function")x["on"+t](e);((x._l||{})[t]||[]).forEach(function(f){f.call(x,e)})}'+
+'function X(){this.readyState=0;this.status=0;this.statusText="";this.responseText="";this.response=null;this.responseType="";this.withCredentials=false;this.timeout=0;this._h={};this._rh=new Headers()}'+
+'X.prototype.open=function(m,u){this._m=m;this._u=abs(u);this.readyState=1};'+
+'X.prototype.setRequestHeader=function(k,v){this._h[k]=v};'+
+'X.prototype.getResponseHeader=function(k){return this._rh.get(k)};'+
+'X.prototype.getAllResponseHeaders=function(){var s="";this._rh.forEach(function(v,k){s+=k+": "+v+"\\r\\n"});return s};'+
+'X.prototype.overrideMimeType=function(){};X.prototype.abort=function(){};'+
+'X.prototype.addEventListener=function(t,f){this._l=this._l||{};this._l[t]=(this._l[t]||[]).concat(f)};'+
+'X.prototype.removeEventListener=function(){};'+
+'X.prototype.send=function(b){var x=this;P.libcurl.fetch(x._u,{method:x._m,headers:x._h,body:b||undefined}).then(function(r){x.status=r.status;x.statusText=r.statusText;x._rh=r.headers;x.responseURL=r.url;'+
+'return x.responseType==="arraybuffer"?r.arrayBuffer():x.responseType==="blob"?r.blob():r.text()}).then(function(d){'+
+'if(x.responseType==="json"){try{d=JSON.parse(d)}catch(e){d=null}}else if(typeof d==="string")x.responseText=d;'+
+'x.response=d;x.readyState=4;fire(x,"readystatechange");fire(x,"load");fire(x,"loadend")}).catch(function(){x.readyState=4;fire(x,"readystatechange");fire(x,"error");fire(x,"loadend")})};'+
+'X.UNSENT=0;X.OPENED=1;X.DONE=4;window.XMLHttpRequest=X;'+
+'window.open=function(u){if(u)nav(abs(u),0,1);return null};'+
+'try{history.pushState=function(){};history.replaceState=function(){}}catch(e){}'+
+'document.addEventListener("click",function(e){if(e.defaultPrevented||e.button)return;var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;var h=a.getAttribute("href");'+
+'if(/^(javascript:|mailto:|tel:|blob:|data:)/i.test(h))return;e.preventDefault();'+
+'if(h.charAt(0)==="#"){var el=document.getElementById(h.slice(1));if(el)el.scrollIntoView();return}nav(a.href,0,a.target==="_blank")},false);'+
+'document.addEventListener("submit",function(e){if(e.defaultPrevented)return;var f=e.target;e.preventDefault();var m=(f.getAttribute("method")||"get").toLowerCase(),u=abs(f.getAttribute("action")||B),fd=new URLSearchParams(new FormData(f));'+
+'if(m==="post"){nav(u,{method:"POST",body:fd.toString(),headers:{"Content-Type":"application/x-www-form-urlencoded"}})}else{var q=new URL(u);q.search=fd.toString();nav(q.href)}},false);'+
+'function hk(C,p,k){var d=Object.getOwnPropertyDescriptor(C.prototype,p);if(!d||!d.set)return;Object.defineProperty(C.prototype,p,{get:d.get,set:function(v){var s=this,u=String(v);if(/^(data:|blob:|about:|javascript:|#)/i.test(u)){d.set.call(s,v);return}P.hzAsset(abs(u),k).then(function(r){d.set.call(s,r)})},configurable:true})}'+
+'hk(HTMLImageElement,"src","blob");hk(HTMLScriptElement,"src","js");hk(HTMLLinkElement,"href","css");'+
+'var sa=Element.prototype.setAttribute;Element.prototype.setAttribute=function(n,v){var t=this.tagName,k=n=="src"?(t=="IMG"?"blob":t=="SCRIPT"?"js":0):n=="href"?(t=="LINK"?"css":0):0;if(k&&!/^(data:|blob:|about:|javascript:|#)/i.test(String(v))){var s=this;P.hzAsset(abs(String(v)),k).then(function(r){sa.call(s,n,r)});return}return sa.apply(this,arguments)};'+
+'})();';
+}
+/* ---------- subresource pipeline: CSS, scripts, images and fonts also go through libcurl/Wisp ---------- */
+let busy = 0; const waitQ = [];
+const slot = () => new Promise(r => { const t = () => busy < 8 ? (busy++, r()) : waitQ.push(t); t(); });
+const freeSlot = () => { busy--; const n = waitQ.shift(); if (n) n(); };
+const acache = new Map();
+const aabs = (u, b) => { try { return new URL(u, b).href; } catch (e) { return u; } };
+const toData = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+async function cssRewrite(css, base) {
+  const re = /url\(\s*(['"]?)(.*?)\1\s*\)|@import\s+(['"])(.*?)\3/gi;
+  const out = await Promise.all([...css.matchAll(re)].map(async m => {
+    const raw = m[2] !== undefined ? m[2] : m[4];
+    if (!raw || /^(data:|blob:|#)/i.test(raw)) return m[0];
+    const u = aabs(raw, base);
+    return m[4] !== undefined ? '@import "' + await asset(u, "css") + '"' : 'url("' + await asset(u, "data") + '")';
+  }));
+  let i = 0; return css.replace(re, () => out[i++]);
+}
+function asset(u, kind) {
+  const k = kind + "|" + u; if (acache.has(k)) return acache.get(k);
+  const p = (async () => {
+    let r, txt, b, fin = u;
+    await slot();
+    try {
+      r = await libcurl.fetch(u, { redirect: "follow" });
+      if (r.status >= 400) return u;
+      fin = r.url || u;
+      if (kind === "css" || kind === "js") txt = await r.text(); else b = await r.blob();
+    } catch (e) { return u; } finally { freeSlot(); }
+    if (txt !== undefined) {
+      if (kind === "css") txt = await cssRewrite(txt, fin).catch(() => txt);
+      return URL.createObjectURL(new Blob([txt], { type: kind === "css" ? "text/css" : "text/javascript" }));
+    }
+    return kind === "data" && b.size < 6e6 ? await toData(b) : URL.createObjectURL(b);
+  })();
+  acache.set(k, p); return p;
+}
+window.hzAsset = (u, k) => asset(u, k);
+async function prep(html, base, id) {
+  const d = new DOMParser().parseFromString(html, "text/html");
+  d.querySelectorAll('meta[http-equiv="Content-Security-Policy" i],meta[http-equiv="refresh" i],base,link[rel~="preload" i],link[rel~="prefetch" i],link[rel~="modulepreload" i]').forEach(e => e.remove());
+  d.querySelectorAll("[integrity]").forEach(e => { e.removeAttribute("integrity"); e.removeAttribute("crossorigin"); });
+  const jobs = [], hook = (el, attr, kind) => {
+    const v = el.getAttribute(attr); if (!v || /^(data:|blob:|#|javascript:|about:)/i.test(v)) return;
+    jobs.push(asset(aabs(v, base), kind).then(x => el.setAttribute(attr, x)));
+  };
+  d.querySelectorAll("picture source").forEach(e => e.remove());
+  d.querySelectorAll("img[srcset]").forEach(e => { if (!e.getAttribute("src")) e.setAttribute("src", e.getAttribute("srcset").trim().split(/\s+/)[0]); e.removeAttribute("srcset"); });
+  d.querySelectorAll("img[src]").forEach(e => hook(e, "src", "blob"));
+  d.querySelectorAll('link[rel~="stylesheet" i][href],link[rel~="icon" i][href]').forEach(e => hook(e, "href", /icon/i.test(e.rel) ? "blob" : "css"));
+  d.querySelectorAll('script[src]:not([type="module" i])').forEach(e => hook(e, "src", "js"));
+  d.querySelectorAll("style").forEach(e => jobs.push(cssRewrite(e.textContent, base).then(x => { e.textContent = x; })));
+  d.querySelectorAll('[style*="url("]').forEach(e => jobs.push(cssRewrite(e.getAttribute("style"), base).then(x => e.setAttribute("style", x))));
+  $("status").textContent = "Loading " + jobs.length + " resources ...";
+  await Promise.race([Promise.allSettled(jobs), new Promise(r => setTimeout(r, 20000))]);
+  const m = d.createElement("meta"); m.name = "referrer"; m.content = "no-referrer";
+  const b = d.createElement("base"); b.href = base;
+  const sc = d.createElement("script"); sc.textContent = directShim(base, id);
+  d.head.prepend(sc); d.head.prepend(b); d.head.prepend(m);
+  return { title: d.title, html: "<!DOCTYPE html>" + d.documentElement.outerHTML };
+}
+async function goDirect(t, url, push, opts) {
+  t.direct = true; t.token = (t.token || 0) + 1; const my = t.token;
+  t.url = url; t.title = "Loading..."; t.loading = true;
+  if (push) { t.hist = t.hist.slice(0, t.i + 1); t.hist.push(url); t.i = t.hist.length - 1; }
+  if (t === active) { $("omni").value = url; $("ntp").hidden = true; t.frame.hidden = false; }
+  render(); navState(); $("status").textContent = "Loading " + url + " ...";
+  try {
+    await loadLibcurl();
+    const w = await resolveWisp();
+    if (directWisp !== w) { libcurl.set_websocket(w); directWisp = w; }
+    const r = await Promise.race([libcurl.fetch(url, Object.assign({ redirect: "follow" }, opts || {})), tmo(25000, "Timed out. The Wisp server is down or too slow.")]);
+    if (my !== t.token) return;
+    const final = r.url || url, ct = (r.headers.get("content-type") || "").toLowerCase();
+    t.url = final; if (push) t.hist[t.i] = final; t.title = final.replace(/^https?:\/\//, "");
+    if (ct === "" || ct.includes("html")) {
+      const pr = await prep(await r.text(), final, t.id); if (my !== t.token) return; if (pr.title) t.title = pr.title;
+      t.frame.removeAttribute("src"); t.frame.srcdoc = pr.html;
+    } else {
+      const blob = await r.blob(); t.frame.removeAttribute("srcdoc"); t.frame.src = URL.createObjectURL(blob);
+    }
+  } catch (err) {
+    if (my !== t.token) return;
+    t.title = "Could not load"; t.frame.removeAttribute("src");
+    t.frame.srcdoc = '<body style="font:15px system-ui;padding:40px;max-width:560px;margin:auto"><h2>Could not load this page</h2><p>' + esc(url) + '</p><p style="color:#a33">' + esc(err && err.message || err) + '</p><p>Check that the Wisp server in settings is reachable, then reload.</p></body>';
+  }
+  t.loading = false; $("status").textContent = ""; render();
+  if (t === active) { if (document.activeElement !== $("omni")) $("omni").value = t.url; navState(); }
+}
+window.tabNav = (id, url, opts, blank) => { const t = tabs.find(x => x.id === id); if (!t) return; blank ? newTab(url) : go(t, url, true, opts); };
+
+function goHosted(t, url) {
+  const H = hostedURL(), origin = new URL(H).origin;
+  t.direct = false; t.hosted = true; t.url = url; t.title = "Loading...";
+  if (t === active) { $("omni").value = url; $("ntp").hidden = true; t.frame.hidden = false; }
+  render(); $("status").textContent = "Loading " + url;
+  const cfg = { wisp: wispVal(), wisplist: $("wisplist").value };
+  if (t.ready && t.frame.src.startsWith(origin)) { t.frame.contentWindow.postMessage({ hz: 1, cfg, go: url }, origin); return; }
+  t.ready = false; t.pending = url;
+  t.frame.removeAttribute("srcdoc"); t.frame.src = H + (H.includes("?") ? "&" : "?") + "embed=1";
+}
+const toHosted = m => { try { active.frame.contentWindow.postMessage(Object.assign({ hz: 1 }, m), new URL(hostedURL()).origin); } catch (e) {} };
+function navState() {
+  if (active && active.sj && active.url) { $("back").disabled = false; $("fwd").disabled = false; return; }
+  if (active && active.hosted && active.url) { $("back").disabled = !active.hback; $("fwd").disabled = !active.hfwd; return; }
+  if (active && active.direct && active.url) { $("back").disabled = active.i <= 0; $("fwd").disabled = active.i >= active.hist.length - 1; return; }
+  let w = null; try { w = active && active.url && active.frame.contentWindow; } catch (e) {}
+  const nav = w && w.navigation;
+  $("back").disabled = !w || (nav ? !nav.canGoBack : false);
+  $("fwd").disabled = !w || (nav ? !nav.canGoForward : false);
+}
+
+/* keep address bar / titles in sync with whatever the page did (links, redirects, pushState) */
+setInterval(() => {
+  for (const t of tabs) {
+    if (t.sj) { try { const ti = t.frame.contentDocument && t.frame.contentDocument.title; if (ti && ti !== t.title) { t.title = ti; render(); } } catch (e) {} continue; }
+    if (!t.url || t.direct || t.hosted) continue;
+    try {
+      const w = t.frame.contentWindow, p = w.location.pathname;
+      if (!p.startsWith(PREFIX)) continue;
+      const real = decodeURIComponent(p.slice(PREFIX.length)) + w.location.hash;
+      let changed = false;
+      if (real !== t.url) { t.url = real; changed = true; }
+      const title = (w.document && w.document.title) || new URL(real).host;
+      if (title !== t.title) { t.title = title; changed = true; }
+      if (changed) { render(); if (t === active && document.activeElement !== $("omni")) $("omni").value = t.url; }
+    } catch (e) {}
+  }
+  navState();
+}, 250);
+
+/* controls */
+const submit = el => { const v = el.value; if (!v.trim()) return; el.blur(); go(active, v); };
+$("omni").onkeydown = e => { if (e.key === "Enter") submit($("omni")); };
+$("omni").onfocus = () => $("omni").select();
+$("ntpq").onkeydown = e => { if (e.key === "Enter") submit($("ntpq")); };
+$("newtab").onclick = () => newTab();
+$("back").onclick = () => { if (active.sj) return active.sjf && active.sjf.back(); if (active.hosted) return toHosted({ cmd: "back" }); if (active.direct) { if (active.i > 0) { active.i--; go(active, active.hist[active.i], false); } return; } try { active.frame.contentWindow.history.back(); } catch (e) {} };
+$("fwd").onclick = () => { if (active.sj) return active.sjf && active.sjf.forward(); if (active.hosted) return toHosted({ cmd: "fwd" }); if (active.direct) { if (active.i < active.hist.length - 1) { active.i++; go(active, active.hist[active.i], false); } return; } try { active.frame.contentWindow.history.forward(); } catch (e) {} };
+$("reload").onclick = () => { if (active.sj) return active.sjf && active.sjf.reload(); if (active.hosted) return toHosted({ cmd: "reload" }); if (active.direct && active.url) return go(active, active.url, false); if (active.url) try { active.frame.contentWindow.location.reload(); } catch (e) { active.frame.src = active.frame.src; } };
+$("home").onclick = () => { active.url = ""; active.title = "New Tab"; active.hist = []; active.i = -1; active.direct = false; active.sj = false; active.hosted = false; active.ready = false; active.frame.removeAttribute("srcdoc"); active.frame.src = "about:blank"; $("ntpq").value = ""; select(active); $("ntpq").focus(); };
+$("full").onclick = () => { const s = $("stage"); if (document.fullscreenElement) document.exitFullscreen(); else if (s.requestFullscreen) s.requestFullscreen(); };
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") { e.preventDefault(); $("omni").focus(); } });
+/* pages ask for new tabs (target=_blank links, window.open) */
+window.addEventListener("message", e => {
+  const d = e.data; if (!d || typeof d !== "object") return;
+  if (e.origin === location.origin && d.hzOpen) { EMBED ? parent.postMessage({ hz: 1, open: d.hzOpen }, "*") : newTab(d.hzOpen); return; }
+  if (!d.hz) return;
+  if (EMBED) {                                   /* we are the hosted engine, driven by a launcher page */
+    if (e.source !== parent) return;
+    if (d.cfg) { if (d.cfg.wisp) $("wisp").value = d.cfg.wisp; if (d.cfg.wisplist != null) $("wisplist").value = d.cfg.wisplist; curWisp = null; }
+    if (typeof d.go === "string" && /^https?:\/\//i.test(d.go)) go(active, d.go);
+    if (d.cmd === "back") $("back").click(); if (d.cmd === "fwd") $("fwd").click(); if (d.cmd === "reload") $("reload").click();
+    return;
+  }
+  let H; try { H = new URL(hostedURL()).origin; } catch (x) { return; }
+  if (e.origin !== H) return;
+  if (d.open) return newTab(d.open);
+  const t = tabs.find(x => x.hosted && x.frame.contentWindow === e.source); if (!t) return;
+  if (d.ready) { t.ready = true; e.source.postMessage({ hz: 1, cfg: { wisp: wispVal(), wisplist: $("wisplist").value }, go: t.pending || t.url }, H); return; }
+  if (d.state) {
+    if (d.state.url) t.url = d.state.url;
+    if (d.state.title) t.title = d.state.title;
+    t.hback = d.state.back; t.hfwd = d.state.fwd;
+    if (t.title !== "Loading...") $("status").textContent = "";
+    if (t === active) { setPill(d.state.pill || "chk", d.state.pilltext || "Hosted", "Wisp status from the hosted engine"); if (document.activeElement !== $("omni")) $("omni").value = t.url; navState(); }
+    render();
+  }
+});
+
+if (EMBED) {
+  const send = m => parent.postMessage(Object.assign({ hz: 1 }, m), "*");
+  let last = "";
+  setInterval(() => {
+    const t = active, st = { url: t.url, title: t.title, back: !$("back").disabled, fwd: !$("fwd").disabled, pill: $("pill").className, pilltext: $("pill").lastChild.textContent }, j = JSON.stringify(st);
+    if (j !== last && t.url) { last = j; send({ state: st }); }
+  }, 250);
+  send({ ready: 1 });
+}
+modeNote();
+window.hz = { resolve, newTab, go, tabs: () => tabs };
+newTab();
+</script>
+</body>
+</html>
