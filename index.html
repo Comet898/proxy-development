@@ -175,21 +175,21 @@ function probe(url, ms) {
     setTimeout(() => fin(false), ms || 6000);
   });
 }
-let wispFailAt = 0;
+let wispFailAt = 0, wispOK = false;
 async function resolveWisp() {
   const want = wispVal();
   if (curWisp && curWisp.want === want) return curWisp.use;
-  if (new URLSearchParams(location.search).has("libcurl")) { curWisp = { want, use: want }; setPill("ok", "Test mode"); return want; }
+  if (new URLSearchParams(location.search).has("libcurl")) { curWisp = { want, use: want }; wispOK = true; setPill("ok", "Test mode"); return want; }
   if (Date.now() - wispFailAt < 60000) return want;
   setPill("chk", "Checking", "Checking " + want);
-  if (await probe(want, 8000)) { curWisp = { want, use: want }; setPill("ok", "Connected", "Wisp: " + want); return want; }
+  if (await probe(want, 8000)) { curWisp = { want, use: want }; wispOK = true; setPill("ok", "Connected", "Wisp: " + want); return want; }
   const others = wispList().filter(x => x !== want);
   const win = await new Promise(res => {
     let left = others.length; if (!left) return res(null);
     others.forEach(w => probe(w, 10000).then(ok => { if (ok) res(w); else if (--left === 0) res(null); }));
   });
-  if (win) { curWisp = { want, use: win }; setPill("ok", "Fallback server", "Wisp: " + win); return win; }
-  wispFailAt = Date.now();
+  if (win) { curWisp = { want, use: win }; wispOK = true; setPill("ok", "Fallback server", "Wisp: " + win); return win; }
+  wispFailAt = Date.now(); wispOK = false;
   setPill("chk", "Unverified", "Could not confirm any Wisp server from this page. Browsing is still attempted with " + want + ".");
   return want;
 }
@@ -241,10 +241,15 @@ async function goSJ(t, url) {
   if (t === active) { $("omni").value = url; $("ntp").hidden = true; t.frame.hidden = false; }
   render(); $("status").textContent = "Starting Scramjet ...";
   try {
-    const want = wispVal();
-    const w = await Promise.race([resolveWisp(), new Promise(r => setTimeout(() => r(want), 4000))]);
+    const w = await Promise.race([resolveWisp(), tmo(30000, "Wisp check timed out")]);
+    if (!wispOK) { const er = new Error("No working Wisp server"); er.noWisp = true; throw er; }
     await Promise.race([bootSJ(w), tmo(20000, "Scramjet took too long to start")]);
   } catch (e) {
+    if (e.noWisp || /Wisp/.test(e.message)) {
+      t.title = "No Wisp server"; render(); $("status").textContent = "No working Wisp server. See the page for the fix.";
+      t.frame.removeAttribute("src"); t.frame.srcdoc = '<body style="font:15px system-ui;padding:40px;max-width:580px;margin:auto;line-height:1.5"><h2>No working Wisp server</h2><p>Every server in your list is offline or blocking you (that is the "error code 7: Could not connect" you saw).</p><p>Fix, about a minute: open the <b>wisp-server</b> folder, run <code>npm install</code> then <code>npm start</code>, then in Settings put <code>ws://localhost:8080/</code> as the Preferred Wisp server and press Test.</p><p>To use it away from your computer, deploy that folder on Render, Railway or Fly and use its <code>wss://</code> address.</p></body>';
+      return;
+    }
     if ($("mode").value === "auto") { sjBad = true; t.sj = false; $("status").textContent = "Scramjet failed (" + e.message + "), using the lite engine"; return go(t, url); }
     t.title = "Error"; render(); $("status").textContent = "Error: " + e.message; return;
   }
