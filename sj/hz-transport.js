@@ -155,7 +155,77 @@
     }
   }
 
-  const api = { toPairs, toObj, normBody, retryable, AdapterTransport, FallbackTransport };
+  /* Tries the same request through several Wisp servers. When one cannot reach a site (for example
+     "SSL connect error" / "tls handshake eof"), the next server is used and remembered per host. */
+  class WispPoolTransport {
+    constructor(urls, factory, log) {
+      this.urls = urls; this.factory = factory; this.log = log || function () {};
+      this.ts = new Map(); this.bad = new Map(); this.prefs = new Map();
+      this.ready = false; this.label = "pool";
+    }
+    async get(i) {
+      let p = this.ts.get(i);
+      if (!p) {
+        p = (async () => { const t = await this.factory(this.urls[i]); if (!t.ready) await t.init(); return t; })();
+        this.ts.set(i, p);
+        p.catch(() => this.ts.delete(i));
+      }
+      return p;
+    }
+    async init() {
+      let err = null;
+      for (let i = 0; i < this.urls.length; i++) {
+        try { await this.get(i); this.cur = i; this.ready = true; return; } catch (e) { err = e; }
+      }
+      throw err || new Error("No transport available");
+    }
+    async meta() {}
+    order(host) {
+      const n = this.urls.length, now = Date.now();
+      const first = this.prefs.has(host) && this.prefs.get(host).until > now ? this.prefs.get(host).i : (this.cur || 0);
+      const all = [first]; for (let i = 0; i < n; i++) if (i !== first) all.push(i);
+      const good = all.filter(i => !(this.bad.get(i) > now)), bad = all.filter(i => this.bad.get(i) > now);
+      return good.concat(bad);
+    }
+    async request(remote, method, body, headers, signal) {
+      const host = remote.hostname;
+      body = await normBody(body);
+      const order = this.order(host);
+      let lastErr = null, tries = 0;
+      for (let k = 0; k < order.length && tries < 6; k++) {
+        const i = order[k];
+        try {
+          tries++;
+          const t = await Promise.race([this.get(i), new Promise((_, rej) => setTimeout(() => rej(new Error("Wisp transport start timed out")), 15000))]);
+          const r = await Promise.race([t.request(remote, method, body, headers, signal), new Promise((_, rej) => setTimeout(() => rej(new Error("Wisp request timed out (connect)")), 25000))]);
+          if (k > 0) {
+            this.prefs.set(host, { i, until: Date.now() + 10 * 60 * 1000 });
+            this.log("info", "wisp", host + " loaded through " + this.urls[i]);
+          }
+          this.bad.delete(i);
+          return r;
+        } catch (e) {
+          lastErr = e;
+          if (/timed out/i.test(errText(e))) this.bad.set(i, Date.now() + 2 * 60 * 1000);
+          const more = k < order.length - 1;
+          this.log("warn", "wisp", this.urls[i] + " failed for " + host + ": " + errText(e).slice(0, 160) + (more && retryable(method, e) ? " (trying next server)" : ""));
+          if (!more || !retryable(method, e)) break;
+        }
+      }
+      throw lastErr || new Error("No transport available");
+    }
+    connect(url, protocols, requestHeaders, onopen, onmessage, onclose, onerror) {
+      const p = this.prefs.get(url.hostname);
+      const i = p && p.until > Date.now() ? p.i : (this.cur || 0);
+      const done = this.ts.get(i);
+      const tp = done || this.get(i);
+      let inner = null, closed = false;
+      tp.then(t => { if (!closed) inner = t.connect(url, protocols, requestHeaders, onopen, onmessage, onclose, onerror); }).catch(e => onerror && onerror(e));
+      return new Proxy({}, { get: (_, k) => k === "then" ? undefined : (...a) => { if (k === "close") closed = true; return inner && inner[k] ? inner[k](...a) : undefined; } });
+    }
+  }
+
+  const api = { toPairs, toObj, normBody, retryable, AdapterTransport, FallbackTransport, WispPoolTransport };
   root.HZTransport = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof self !== "undefined" ? self : globalThis);

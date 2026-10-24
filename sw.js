@@ -1,7 +1,7 @@
 // Custom service-worker web proxy: libcurl.js (WASM) + Wisp transport,
 // with a cookie jar, AST-based JS rewriting and a faked window.location.
 const Q = new URL(self.location).searchParams;
-const WISP = Q.get("wisp") || "wss://wisp.mercurywork.shop/";
+const WISP = Q.get("wisp") || "wss://motor-cycle-part.org/";
 importScripts(
   Q.get("libcurl") || "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl_full.js",
   Q.get("acorn") || "https://cdn.jsdelivr.net/npm/acorn@8.14.0/dist/acorn.js"

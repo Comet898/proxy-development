@@ -7854,7 +7854,7 @@ const ENGINES = {
   ddg: ["DuckDuckGo", "https://html.duckduckgo.com/html/?q="], bing: ["Bing", "https://www.bing.com/search?q="],
   google: ["Google", "https://www.google.com/search?q="], brave: ["Brave", "https://search.brave.com/search?q="]
 };
-const DEFAULT_WISPS = ["wss://wisp.mercurywork.shop/", "wss://anura.pro/", "wss://wisp.rhw.one/wisp/", "wss://pgis-wisp.onrender.com/", "wss://pgis-wisp-2.onrender.com/"];
+const DEFAULT_WISPS = ["wss://motor-cycle-part.org/", "wss://wisp.terbiumon.top/", "wss://mages.io/", "wss://definitelyscience.com/", "wss://lichology.com/", "wss://anura.pro/", "wss://wisp.mercurywork.shop/", "wss://wisp.rhw.one/wisp/", "wss://pgis-wisp.onrender.com/", "wss://pgis-wisp-2.onrender.com/", "wss://area.forwardersoft.com/", "wss://truf.the-nest.at/", "wss://thoughts.forwardersoft.com/", "wss://nebulaproxy.io/", "wss://invisiproxy.com/", "wss://english.algebra.teacher.vocabulary.homework.forwardersoft.com/"];
 const normW = u => { u = (u || "").trim(); return u && !u.endsWith("/") ? u + "/" : u; };
 const wispList = () => $("wisplist").value.split(/\s+/).filter(x => /^wss?:\/\//i.test(x)).map(normW);
 const wispVal = () => normW($("wisp").value) || wispList()[0] || "";
@@ -7928,9 +7928,9 @@ $("wisp").value = store.get("wisp2", "");
 $("transport").value = store.get("transport2", "auto");
 $("ua").value = store.get("ua", "win");
 $("mode").value = store.get("mode", "auto");
-$("wisplist").value = store.get("wisplist3", DEFAULT_WISPS.join("\n"));
+$("wisplist").value = store.get("wisplist4", DEFAULT_WISPS.join("\n"));
 $("hosted").value = store.get("hosted", "");
-$("wisplist").onchange = () => { store.set("wisplist3", $("wisplist").value); curWisp = null; };
+$("wisplist").onchange = () => { store.set("wisplist4", $("wisplist").value); curWisp = null; };
 $("hosted").onchange = () => store.set("hosted", $("hosted").value.trim());
 const hostedURL = () => {
   try {
@@ -8037,6 +8037,12 @@ const OSP = {
 const BRANDS = [["Chromium", CV], ["Not?A_Brand", "8"], ["Google Chrome", CV]];
 const CHUA = BRANDS.map(([b, v]) => '"' + b + '";v="' + v + '"').join(", ");
 const identity = () => OSP[$("ua").value] || null;
+/* Google/YouTube sign-in checks that headers, client hints and navigator agree with the real browser, so these hosts get the browser's own identity instead of the spoofed one */
+const NOSPOOF = /(^|\.)(google|gstatic|googleapis|googleusercontent|youtube|ytimg|ggpht|googlevideo|recaptcha)\.[a-z.]+$/i;
+const realHint = () => { try { const d = navigator.userAgentData; if (!d) return null; return [["sec-ch-ua", d.brands.map(b => '"' + b.brand + '";v="' + b.version + '"').join(", ")], ["sec-ch-ua-mobile", d.mobile ? "?1" : "?0"], ["sec-ch-ua-platform", '"' + d.platform + '"']]; } catch (e) { return null; } };
+const hostOf = ctx => { try { return (ctx.parsed && ctx.parsed.url.hostname) || (ctx.client && ctx.client.url && ctx.client.url.hostname) || ""; } catch (e) { return ""; } };
+const sanitizeBody = s => String(s).slice(0, 220).replace(/(at|token|password|passwd|Passwd|pass)=[^&]*/g, "$1=…");
+const REQINFO = new WeakMap();
 
 /* the worker is registered under a versioned URL so the old v1 worker is replaced cleanly */
 async function regSW() {
@@ -8054,11 +8060,14 @@ async function regSW() {
 
 async function makeTransport(kind, wisp) {
   if (window.HZ_TEST_TRANSPORT) return window.HZ_TEST_TRANSPORT;            /* test hook */
-  const { AdapterTransport, FallbackTransport } = window.HZTransport, base = SJ_BASE();
-  const load = async name => { const m = await import(base + "transport/" + name + ".mjs"); return new AdapterTransport(new m.default({ wisp, websocket: wisp }), name); };
-  let t;
-  if (kind === "epoxy" || kind === "libcurl") t = await load(kind);
-  else t = new FallbackTransport(await load("epoxy"), () => load("libcurl"), log);
+  const { AdapterTransport, FallbackTransport, WispPoolTransport } = window.HZTransport, base = SJ_BASE();
+  const load = async (name, w) => { const m = await import(base + "transport/" + name + ".mjs"); return new AdapterTransport(new m.default({ wisp: w, websocket: w }), name); };
+  const one = async w => {
+    if (kind === "epoxy" || kind === "libcurl") return await load(kind, w);
+    return new FallbackTransport(await load("epoxy", w), () => load("libcurl", w), log);
+  };
+  const urls = [wisp].concat(wispList().filter(x => x !== wisp));
+  const t = new WispPoolTransport(urls, one, log);
   await t.init();
   return t;
 }
@@ -8100,8 +8109,8 @@ async function bootSJ(wisp) {
 
 /* make the proxied page's navigator match the request headers, and switch passkeys off
    (a passkey is tied to the real site origin, so it can never work through a proxy) */
-function patchRealm(w) {
-  const P = identity();
+function patchRealm(w, real) {
+  const P = real ? null : identity();
   if (P && w.Navigator) {
     const D = (o, k, v) => w.Object.defineProperty(o, k, { get: () => v, configurable: true }), N = w.Navigator.prototype;
     const B = BRANDS.map(([b, v]) => ({ brand: b, version: v })), FB = BRANDS.map(([b, v]) => ({ brand: b, version: v === "8" ? "8.0.0.0" : CFV }));
@@ -8139,12 +8148,24 @@ function hookFrame(t, frame) {
   const { Tap } = $scramjet, starts = new WeakMap();
   Tap.tap(frame.hooks.fetch.request, (ctx, props) => {
     starts.set(ctx.request, performance.now());
-    const P = identity(), h = props.init && props.init.headers;
+    const real = NOSPOOF.test(hostOf(ctx)), P = real ? null : identity(), h = props.init && props.init.headers;
+    try {
+      const info = { m: props.init && props.init.method, hdr: Array.isArray(h) ? h.map(x => String(x[0]).toLowerCase()).join(",") : "?", body: "" };
+      const b = props.init && props.init.body;
+      if (b != null) {
+        if (typeof b === "string") info.body = sanitizeBody(b);
+        else if (b instanceof ArrayBuffer || ArrayBuffer.isView(b)) info.body = sanitizeBody(new TextDecoder().decode(b));
+        else if (typeof b.tee === "function") { const [x, y] = b.tee(); props.init.body = x; info.bodyP = (async () => { const r = y.getReader(), c = await r.read(); r.cancel().catch(() => {}); return c.value ? sanitizeBody(new TextDecoder().decode(c.value)) : ""; })().catch(() => ""); }
+        else info.body = "[" + (b.constructor && b.constructor.name) + "]";
+      } else info.body = "[none]";
+      REQINFO.set(ctx.request, info);
+    } catch (e) {}
     if (!Array.isArray(h)) return;
     const has = n => h.some(x => String(x[0]).toLowerCase() === n);
     for (let i = h.length - 1; i >= 0; i--) if (/^(user-agent|sec-ch-ua.*)$/i.test(h[i][0])) h.splice(i, 1);
-    h.push(["User-Agent", P ? P.ua : navigator.userAgent]);
+    if (!real) h.push(["User-Agent", P ? P.ua : navigator.userAgent]);
     if (P) h.push(["sec-ch-ua", CHUA], ["sec-ch-ua-mobile", "?0"], ["sec-ch-ua-platform", '"' + P.plat + '"']);
+    else if (real) { const rh = realHint(); if (rh) rh.forEach(x => h.push(x)); }
     if (!has("accept-language")) h.push(["Accept-Language", (navigator.language || "en-US") + "," + (navigator.language || "en-US").split("-")[0] + ";q=0.9"]);
   });
   Tap.tap(frame.hooks.fetch.response, (ctx, props) => {
@@ -8156,8 +8177,9 @@ function hookFrame(t, frame) {
       if (b && typeof b.tee === "function") { const [a, c] = b.tee(); r.body = a; new Response(c).text().then(s => log("warn", "net", "  reply: " + s.slice(0, 300))).catch(() => {}); }
       else snippet(b).then(s => s && log("warn", "net", "  reply: " + s));
     }
+    if (r.status >= 400) { const i = REQINFO.get(ctx.request); if (i) Promise.resolve(i.bodyP || i.body).then(bd => log("warn", "net", "  sent: " + i.m + " headers=[" + i.hdr + "] body=" + (bd || "[empty]"))); }
   });
-  Tap.tap(frame.hooks.init.pre, ctx => { try { patchRealm(ctx.window); } catch (e) {} });
+  Tap.tap(frame.hooks.init.pre, ctx => { try { let hn = ""; try { hn = ctx.client.url.hostname; } catch (e) {} patchRealm(ctx.window, NOSPOOF.test(hn)); } catch (e) {} });
   Tap.tap(frame.hooks.error.request, (ctx, props) => {
     const m = String((ctx.error && ctx.error.message) || ctx.error), u = ctx.rawrequest.rawUrl, d = ctx.rawrequest.destination;
     log("error", "sj", "request failed: " + m.slice(0, 300));
