@@ -89,8 +89,8 @@
   @media (max-width: 640px) { #logs { height: 62vh; } }
 </style>
 <style>
-:root{--h:172;--bg:#fafbfe;--surf:#eff1f8;--tabbar:#e2e5f1;--fg:#141a30;--mut:#667091;--bd:#d9ddeb;--ac:oklch(.56 .14 var(--h));--ok:#1f9d6a;--bad:#d9475a;--warn:#c98a10;--sh:0 18px 50px rgba(20,26,60,.2);color-scheme:light}
-:root[data-theme=dark]{--bg:#0f1426;--surf:#171f3a;--tabbar:#090c19;--fg:#e9edfb;--mut:#8e9ac2;--bd:#252f55;--ac:oklch(.8 .13 var(--h));--ok:#4cd39a;--bad:#ff7b8c;--warn:#e8b74a;--sh:0 18px 50px rgba(0,0,0,.6);color-scheme:dark}
+:root{--bg:#fff;--surf:#f2f2f2;--tabbar:#e6e6e6;--fg:#0a0a0a;--mut:#6b6b6b;--bd:#dadada;--ac:#0a0a0a;--ok:#0a0a0a;--bad:#9a9a9a;--warn:#6b6b6b;--sh:0 18px 50px rgba(0,0,0,.18);color-scheme:light}
+:root[data-theme=dark]{--bg:#000;--surf:#141414;--tabbar:#0b0b0b;--fg:#f4f4f4;--mut:#8c8c8c;--bd:#2a2a2a;--ac:#fff;--ok:#fff;--bad:#6b6b6b;--warn:#a8a8a8;--sh:0 18px 50px rgba(0,0,0,.8);color-scheme:dark}
 body{font-family:Onest,"Segoe UI",system-ui,sans-serif;font-size:14px}
 #tabs{padding:8px 10px 0;gap:4px}
 .tab{height:35px;width:210px;border-radius:11px 11px 0 0;padding:0 7px 0 10px}
@@ -113,7 +113,7 @@ body{font-family:Onest,"Segoe UI",system-ui,sans-serif;font-size:14px}
 #pill{cursor:pointer;border:1px solid var(--bd);background:transparent}
 #pill i{width:9px;height:9px;color:var(--mut)}
 #pill.ok i{background:var(--ok);color:var(--ok);animation:orb 2.8s ease-out infinite}
-#pill.chk i{color:var(--warn);animation:orb 1.1s ease-out infinite}#pill.bad i{color:var(--bad)}
+#pill.chk i{background:transparent;box-shadow:inset 0 0 0 2px var(--fg);color:var(--fg);animation:orb 1.1s ease-out infinite}#pill.bad i{background:transparent;box-shadow:inset 0 0 0 2px var(--bad);color:var(--bad)}
 @keyframes orb{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 60%,transparent)}75%,100%{box-shadow:0 0 0 8px transparent}}
 .bdg{position:absolute;top:2px;right:1px;min-width:15px;height:15px;padding:0 4px;border-radius:8px;background:var(--ac);color:var(--bg);font:600 10px/15px Onest,system-ui;text-align:center}
 .bdg:empty{display:none}
@@ -157,11 +157,11 @@ body{font-family:Onest,"Segoe UI",system-ui,sans-serif;font-size:14px}
 .pb{height:4px;margin-top:6px;border-radius:2px;background:var(--bd);overflow:hidden}.pb u{display:block;height:100%;background:var(--ac);transition:width .2s}
 .empty{padding:60px 24px;text-align:center;color:var(--mut)}.empty b{display:block;color:var(--fg);font-size:15px;margin-bottom:4px}
 .orb{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--mut);flex:none;color:var(--mut)}
-.orb.ok{background:var(--ok);color:var(--ok)}.orb.slow,.orb.chk{background:var(--warn);color:var(--warn)}.orb.bad{background:var(--bad);color:var(--bad)}
+.orb.ok{background:var(--ok);color:var(--ok)}.orb.slow,.orb.chk{background:transparent;box-shadow:inset 0 0 0 2px var(--fg)}.orb.bad{background:transparent;box-shadow:inset 0 0 0 2px var(--bad);color:var(--bad)}
 .it .orb.ok{animation:orb 3s ease-out infinite}
 .srv{display:flex;align-items:center;gap:12px;padding:12px;margin:6px 4px 12px;border-radius:14px;background:var(--surf)}.srv small{display:block;color:var(--mut)}
 .chip{padding:1px 7px;border-radius:9px;background:color-mix(in srgb,var(--ac) 18%,transparent);color:var(--ac);font-size:11px;font-weight:600}
-.sw2{width:34px;height:20px;border-radius:10px;border:0;background:var(--bd);position:relative;cursor:pointer;flex:none}.sw2::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}.sw2.on{background:var(--ac)}.sw2.on::after{left:17px}
+.sw2{width:34px;height:20px;border-radius:10px;border:0;background:var(--bd);position:relative;cursor:pointer;flex:none}.sw2::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--bg);transition:left .15s}.sw2.on{background:var(--ac)}.sw2.on::after{left:17px}
 .it.off{opacity:.5}#sadd{display:flex;gap:6px;margin:14px 4px}#sadd input{flex:1;height:34px;padding:0 12px;border:1px solid var(--bd);border-radius:10px;background:var(--surf);outline:none}
 #libbody details{margin:6px 6px;color:var(--mut)}#libbody details summary{cursor:pointer}#libbody details p{line-height:1.55}#libbody code{background:var(--surf);padding:1px 5px;border-radius:5px}
 #toasts{position:fixed;left:50%;bottom:22px;z-index:80;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center}
@@ -448,8 +448,8 @@ const REQINFO = new WeakMap();
 /* the worker is registered under a versioned URL so the old v1 worker is replaced cleanly */
 async function regSW() {
   const base = SJ_BASE();
-  const reg = await navigator.serviceWorker.register(base + "sw.js?v=2", { scope: base, updateViaCache: "none" });
-  const isNew = w => !!w && /[?&]v=2(&|$)/.test(w.scriptURL);
+  const reg = await navigator.serviceWorker.register(base + "sw.js?v=3", { scope: base, updateViaCache: "none" });
+  const isNew = w => !!w && /[?&]v=3(&|$)/.test(w.scriptURL);
   for (let i = 0; i < 240; i++) {
     if (isNew(reg.active) && reg.active.state === "activated") { log("info", "sj", "service worker active"); return reg; }
     const w = [reg.installing, reg.waiting].find(isNew);
@@ -1080,7 +1080,7 @@ Object.assign(ICON, {
 });
 const hn = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
 const hue = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
-const letter = (u, t) => { const h = hn(u) || t || "?"; return '<i class="fav" style="background:hsl(' + hue(h) + ' 52% 48%)">' + esc(h[0].toUpperCase()) + '</i>'; };
+const letter = (u, t) => { const h = hn(u) || t || "?"; return '<i class="fav" style="background:hsl(0 0% ' + (30 + hue(h) % 30) + '%)">' + esc(h[0].toUpperCase()) + '</i>'; };
 const sz = n => n > 1e9 ? (n / 1e9).toFixed(2) + " GB" : n > 1e6 ? (n / 1e6).toFixed(1) + " MB" : n > 1e3 ? Math.round(n / 1e3) + " KB" : n + " B";
 const dayName = ts => { const d = new Date(ts), n = new Date(), D = x => new Date(x).setHours(0, 0, 0, 0), k = Math.round((D(n) - D(d)) / 864e5); return k === 0 ? "Today" : k === 1 ? "Yesterday" : d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" }); };
 function toast(msg, label, fn) {
@@ -1095,15 +1095,13 @@ $("lock").innerHTML = svg("search", 15); $("libx").innerHTML = svg("close");
 const HUES = [[172, "Wisp"], [255, "Indigo"], [320, "Orchid"], [28, "Ember"], [100, "Moss"]];
 function theme() {
   const m = store.get("bz.theme", "auto"), dark = m === "dark" || (m === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.dataset.theme = dark ? "dark" : "light"; document.documentElement.style.setProperty("--h", store.get("bz.hue", "172"));
-  document.querySelectorAll("#hues button").forEach(b => b.classList.toggle("on", b.dataset.h === store.get("bz.hue", "172")));
+  document.documentElement.dataset.theme = dark ? "dark" : "light"; 
 }
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", theme);
 const st = $("settings");
-st.querySelector(".sh").insertAdjacentHTML("afterend", '<section><h4>Appearance</h4><label>Theme <select id="theme"><option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div class="sw" id="hues"></div><label class="chk"><input id="bbarchk" type="checkbox"> Show bookmarks bar</label></section><section><h4>Downloads</h4><label class="chk"><input id="dlm" type="checkbox"> Manage downloads in this browser</label><label class="chk"><input id="dla" type="checkbox"> Save files automatically when they finish</label><p class="hint">Managed downloads show progress in the Downloads panel and can be saved again without reloading the page.</p></section>');
-HUES.forEach(([h, n]) => { const b = document.createElement("button"); b.dataset.h = h; b.title = n; b.style.background = "oklch(.7 .14 " + h + ")"; b.onclick = () => { store.set("bz.hue", String(h)); theme(); }; $("hues").append(b); });
+st.querySelector(".sh").insertAdjacentHTML("afterend", '<section><h4>Appearance</h4><label>Theme <select id="theme"><option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></label><label class="chk"><input id="bbarchk" type="checkbox"> Show bookmarks bar</label></section><section><h4>Downloads</h4><label class="chk"><input id="dlm" type="checkbox"> Manage downloads in this browser</label><label class="chk"><input id="dla" type="checkbox"> Save files automatically when they finish</label><p class="hint">Managed downloads show progress in the Downloads panel and can be saved again without reloading the page.</p></section>');
 $("theme").value = store.get("bz.theme", "auto"); $("theme").onchange = () => { store.set("bz.theme", $("theme").value); theme(); };
-for (const [id, k, d] of [["bbarchk", "bz.bbar", "1"], ["dlm", "bz.dlm", "1"], ["dla", "bz.dla", "1"]]) { $(id).checked = store.get(k, d) === "1"; $(id).onchange = () => { store.set(k, $(id).checked ? "1" : "0"); drawBbar(); }; }
+for (const [id, k, d] of [["bbarchk", "bz.bbar", "0"], ["dlm", "bz.dlm", "1"], ["dla", "bz.dla", "1"]]) { $(id).checked = store.get(k, d) === "1"; $(id).onchange = () => { store.set(k, $(id).checked ? "1" : "0"); drawBbar(); }; }
 /* the Wisp fields move into the server manager; the inputs stay as the data store */
 for (const id of ["wisp", "wisplist"]) $(id).closest("label").hidden = true;
 st.querySelector("details").hidden = true;
@@ -1257,7 +1255,7 @@ function toggleBm(add) {
 $("star").onclick = () => toggleBm(false);
 function syncStar() { const on = !!(active && BM.some(b => b.u === active.url)); $("star").classList.toggle("on", on); $("star").title = on ? "Remove bookmark" : "Bookmark this page"; }
 function drawBbar() {
-  const bar = $("bbar"); bar.hidden = store.get("bz.bbar", "1") !== "1"; bar.textContent = "";
+  const bar = $("bbar"); bar.hidden = store.get("bz.bbar", "0") !== "1"; bar.textContent = "";
   BM.slice(0, 20).forEach(b => { const x = document.createElement("button"); x.title = b.u; x.innerHTML = letter(b.u, b.t) + "<span>" + esc(b.t) + "</span>"; x.onclick = () => go(active, b.u); x.onauxclick = e => { if (e.button === 1) newTab(b.u); }; bar.append(x); });
   renderNtp();
 }
@@ -1272,7 +1270,7 @@ function rec(t) {
 /* ---- tabs ---- */
 function fav(el, t) {
   if (t.icon) { const im = new Image(); im.onerror = () => { t.icon = ""; fav(el, t); }; im.src = t.icon; el.textContent = ""; el.style.background = "transparent"; el.append(im); return; }
-  const h = hn(t.url); el.textContent = h ? h[0].toUpperCase() : ""; el.style.background = h ? "hsl(" + hue(h) + " 52% 48%)" : "var(--bd)";
+  const h = hn(t.url); el.textContent = h ? h[0].toUpperCase() : ""; el.style.background = h ? "hsl(0 0% " + (30 + hue(h) % 30) + "%)" : "var(--bd)";
   if (!h) el.innerHTML = svg("search", 12);
 }
 render = function () {
@@ -1319,13 +1317,7 @@ sug.addEventListener("mousedown", e => { e.preventDefault(); const d = e.target.
 
 /* ---- new tab page ---- */
 function renderNtp() {
-  const h = new Date().getHours(), q = $("quick"); $("ntp").querySelector("h1").textContent = h < 5 ? "Still up?" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  const seen = new Set(), T = [], add = (u, t) => { const o = hn(u); if (o && !seen.has(o) && T.length < 12) { seen.add(o); T.push({ u, t: t || o }); } };
-  BM.forEach(b => add(b.u, b.t));
-  const n = {}; HIST.forEach(x => { const o = hn(x.u); if (o) (n[o] = n[o] || { c: 0, u: x.u }).c++; }); Object.entries(n).sort((a, b) => b[1].c - a[1].c).forEach(([o, v]) => add(new URL(v.u).origin + "/", o));
-  QUICK.forEach(([t, u]) => add(u, t));
-  q.innerHTML = T.map((x, i) => '<button class="tile" data-i="' + i + '" title="' + esc(x.u) + '"><i style="background:hsl(' + hue(hn(x.u)) + ' 52% 48%)">' + esc(hn(x.u)[0].toUpperCase()) + '</i><span>' + esc(x.t) + '</span></button>').join("");
-  q.onclick = e => { const b = e.target.closest(".tile"); if (b) go(active, T[b.dataset.i].u); };
+  const h = new Date().getHours(); $("ntp").querySelector("h1").textContent = h < 5 ? "Still up?" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; $("quick").textContent = "";
 }
 if (!$("trail")) $("ntp").insertAdjacentHTML("afterbegin", '<svg id="trail" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M-40 560C200 430 330 640 560 480S860 150 1240 250" stroke-width="2.5"/><path d="M-40 200C240 330 420 60 700 190S1000 560 1240 420" stroke-width="2"/><path d="M-40 360C160 120 460 420 640 300S980 110 1240 90" stroke-width="1.6"/></svg>');
 $("ntpq").placeholder = "Search the web or enter an address";
@@ -1388,14 +1380,14 @@ render = function () {
   kids.forEach((d, i) => {
     const t = tabs[i]; if (!t) return;
     if (t.pin) d.classList.add("pin");
-    if (t.group) { d.classList.add("grp"); d.style.setProperty("--g", "hsl(" + hue(t.group) + " 60% 52%)"); d.title = t.group + ": " + t.title; }
+    if (t.group) { d.classList.add("grp"); d.style.setProperty("--g", "hsl(0 0% " + (30 + hue(t.group) % 30) + "%)"); d.title = t.group + ": " + t.title; }
     d.draggable = true; d.ondragstart = e => { drag = t; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", t.url || ""); } catch (x) {} };
     d.ondragover = e => e.preventDefault();
     d.ondrop = e => { e.preventDefault(); if (!drag || drag === t) return; const to = tabs.indexOf(t), from = tabs.indexOf(drag); tabs.splice(from, 1); tabs.splice(from < to ? tabs.indexOf(t) + 1 : tabs.indexOf(t), 0, drag); drag = null; place(); render(); };
     d.oncontextmenu = e => tabMenu(e, t);
   });
   /* one label per group, placed before its first tab */
-  kids.forEach((d, i) => { const g = tabs[i] && tabs[i].group; if (g && !kids.slice(0, i).some((_, j) => tabs[j].group === g)) { const c = document.createElement("em"); c.className = "gchip"; c.textContent = g; c.style.setProperty("--g", "hsl(" + hue(g) + " 60% 52%)"); c.title = "Click to rename group"; c.onclick = () => { const n = prompt("Group name", g); if (n && n.trim()) tabs.forEach(x => { if (x.group === g) x.group = n.trim(); }), render(); }; d.before(c); } });
+  kids.forEach((d, i) => { const g = tabs[i] && tabs[i].group; if (g && !kids.slice(0, i).some((_, j) => tabs[j].group === g)) { const c = document.createElement("em"); c.className = "gchip"; c.textContent = g; c.style.setProperty("--g", "hsl(0 0% " + (30 + hue(g) % 30) + "%)"); c.title = "Click to rename group"; c.onclick = () => { const n = prompt("Group name", g); if (n && n.trim()) tabs.forEach(x => { if (x.group === g) x.group = n.trim(); }), render(); }; d.before(c); } });
 };
 const _c = closeTab; closeTab = t => { if (web(t.url)) CLOSED2.push(t.url); _c(t); };
 $("tablist").addEventListener("contextmenu", e => { if (e.target === $("tablist")) { e.preventDefault(); menu(e.clientX, e.clientY, [["New tab", () => newTab()], ["Reopen closed tab", () => { const u = CLOSED2.pop(); u ? newTab(u) : toast("No closed tabs"); }]]); } });

@@ -18,10 +18,10 @@ const shimOf = (target, over) => new Proxy(target, {
 });
 async function withBody(event) {
   const rq = event.request;
-  if (BODYLESS.test(rq.method) || rq.body) return event;
+  if (BODYLESS.test(rq.method)) return event;
   try {
     const buf = await rq.clone().arrayBuffer();
-    if (!buf.byteLength) return event;
+    if (!buf.byteLength) return event; /* always hand the controller a plain buffer: streamed bodies were arriving empty */
     return shimOf(event, { request: shimOf(rq, { body: buf }) });
   } catch (e) { return event; }
 }

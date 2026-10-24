@@ -47,7 +47,7 @@ one from inline HTML, a blob: URL or file://. Scramjet cannot run without it. So
 
 ## New in this version (UI overhaul)
 
-* Redesigned look: light/dark theme (Settings > Appearance), five accent colours, new tab page with your most visited sites.
+* Redesigned look: light/dark theme (Settings > Appearance), black and white only, new tab page with your most visited sites.
 * History (Ctrl+H): grouped by day, searchable, per-item delete, clear all. Stored only in your browser.
 * Bookmarks (star in the address bar, Ctrl+D, Ctrl+Shift+B) with an optional bookmarks bar and rename/remove.
 * Address bar suggestions from bookmarks and history.
