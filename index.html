@@ -448,8 +448,8 @@ const REQINFO = new WeakMap();
 /* the worker is registered under a versioned URL so the old v1 worker is replaced cleanly */
 async function regSW() {
   const base = SJ_BASE();
-  const reg = await navigator.serviceWorker.register(base + "sw.js?v=3", { scope: base, updateViaCache: "none" });
-  const isNew = w => !!w && /[?&]v=3(&|$)/.test(w.scriptURL);
+  const reg = await navigator.serviceWorker.register(base + "sw.js?v=2", { scope: base, updateViaCache: "none" });
+  const isNew = w => !!w && /[?&]v=2(&|$)/.test(w.scriptURL);
   for (let i = 0; i < 240; i++) {
     if (isNew(reg.active) && reg.active.state === "activated") { log("info", "sj", "service worker active"); return reg; }
     const w = [reg.installing, reg.waiting].find(isNew);
@@ -1099,9 +1099,9 @@ function theme() {
 }
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", theme);
 const st = $("settings");
-st.querySelector(".sh").insertAdjacentHTML("afterend", '<section><h4>Appearance</h4><label>Theme <select id="theme"><option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></label><label class="chk"><input id="bbarchk" type="checkbox"> Show bookmarks bar</label></section><section><h4>Downloads</h4><label class="chk"><input id="dlm" type="checkbox"> Manage downloads in this browser</label><label class="chk"><input id="dla" type="checkbox"> Save files automatically when they finish</label><p class="hint">Managed downloads show progress in the Downloads panel and can be saved again without reloading the page.</p></section>');
+st.querySelector(".sh").insertAdjacentHTML("afterend", '<section><h4>Appearance</h4><p class="hint">Build 15</p><label>Theme <select id="theme"><option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></label><label class="chk"><input id="bbarchk" type="checkbox"> Show bookmarks bar</label></section><section><h4>Downloads</h4><label class="chk"><input id="dlm" type="checkbox"> Manage downloads in this browser</label><label class="chk"><input id="dla" type="checkbox"> Save files automatically when they finish</label><p class="hint">Managed downloads show progress in the Downloads panel and can be saved again without reloading the page.</p></section>');
 $("theme").value = store.get("bz.theme", "auto"); $("theme").onchange = () => { store.set("bz.theme", $("theme").value); theme(); };
-for (const [id, k, d] of [["bbarchk", "bz.bbar", "0"], ["dlm", "bz.dlm", "1"], ["dla", "bz.dla", "1"]]) { $(id).checked = store.get(k, d) === "1"; $(id).onchange = () => { store.set(k, $(id).checked ? "1" : "0"); drawBbar(); }; }
+for (const [id, k, d] of [["bbarchk", "bz.bbar", "0"], ["dlm", "bz.dlm", "0"], ["dla", "bz.dla", "1"]]) { $(id).checked = store.get(k, d) === "1"; $(id).onchange = () => { store.set(k, $(id).checked ? "1" : "0"); drawBbar(); }; }
 /* the Wisp fields move into the server manager; the inputs stay as the data store */
 for (const id of ["wisp", "wisplist"]) $(id).closest("label").hidden = true;
 st.querySelector("details").hidden = true;
@@ -1230,7 +1230,7 @@ const badge = () => { const n = DLS.filter(d => d.state === "active").length; $(
 /* called from the Scramjet response hook: top-level navigations that are files become managed downloads */
 window.dlIntercept = (t, ctx, props) => {
   const r = props.response;
-  if (!r || !r.body || r.status < 200 || r.status > 299 || r.status === 204 || !ctx.request || ctx.request.mode !== "navigate" || store.get("bz.dlm", "1") !== "1") return false;
+  if (!r || !r.body || r.status < 200 || r.status > 299 || r.status === 204 || !ctx.request || ctx.request.mode !== "navigate" || store.get("bz.dlm", "0") !== "1") return false;
   const g = k => { try { return r.headers.get(k) || ""; } catch (e) { return ""; } }, cd = g("content-disposition"), ct = g("content-type").split(";")[0].trim();
   if (!/^\s*attachment/i.test(cd) && !BIN.test(ct)) return false;
   const url = ctx.parsed.url.href, d = dlAdd(url, dlName(cd, url, ct), ct, +g("content-length") || 0);
@@ -1289,7 +1289,7 @@ const _ct = closeTab; closeTab = t => { if (web(t.url)) CLOSED.push(t.url); _ct(
 setInterval(() => {
   for (const t of tabs) {
     rec(t);
-    try { if (t.sj) { const d = t.frame.contentDocument, l = d && d.querySelector('link[rel~="icon" i][href]'); if (hn(t.url) !== t.iconHost) { t.iconHost = hn(t.url); t.icon = ""; } if (l && l.href && l.href !== t.icon && !t.icon) { t.icon = l.href; render(); } } } catch (e) {}
+    try { if (t.sj) { const d = t.frame.contentDocument, l = d && d.querySelector('link[rel~="icon" i][href]'); if (hn(t.url) !== t.iconHost) { t.iconHost = hn(t.url); t.icon = ""; }  } } catch (e) {}
   }
   if (!active) return;
   $("bar").className = active.title === "Loading..." ? "go" : "";
@@ -1335,7 +1335,7 @@ document.addEventListener("keydown", e => {
 }, true);
 
 window.UI = { toast, wsAll, hn, hue, web };
-theme(); badge(); drawBbar(); newTab();
+log("info", "app", "build 15"); theme(); badge(); drawBbar(); newTab();
 })();
 
 </script>
@@ -1400,7 +1400,7 @@ function setZoom(z) {
   localStorage.setItem("bz.zoom", JSON.stringify(m)); applyZoom(); toast(h + " at " + Math.round(z * 100) + "%");
 }
 function stepZoom(dir) { const z = zoomOf(active); let i = ZS.findIndex(x => x >= z - .001); i = Math.min(ZS.length - 1, Math.max(0, i + dir)); setZoom(ZS[i]); }
-function applyZoom() { const d = docOf(active), z = active ? zoomOf(active) : 1; if (d && String(d.documentElement.style.zoom || 1) !== String(z)) d.documentElement.style.zoom = z === 1 ? "" : z; $("zoomchip").hidden = z === 1; $("zoomchip").textContent = Math.round(z * 100) + "%"; }
+function applyZoom() { if (!Object.keys(zoomMap()).length) { $("zoomchip").hidden = true; return; } const d = docOf(active), z = active ? zoomOf(active) : 1; if (d && String(d.documentElement.style.zoom || 1) !== String(z)) d.documentElement.style.zoom = z === 1 ? "" : z; $("zoomchip").hidden = z === 1; $("zoomchip").textContent = Math.round(z * 100) + "%"; }
 $("zoomchip").onclick = () => setZoom(1); setInterval(applyZoom, 700);
 /* ---- find in page ---- */
 $("stage").insertAdjacentHTML("beforeend", '<div id="find" hidden><input id="findq" placeholder="Find in page" aria-label="Find in page" autocomplete="off"><span id="findn"></span><button id="findp" class="ib sm" aria-label="Previous match"></button><button id="findnx" class="ib sm" aria-label="Next match"></button><button id="findx" class="ib sm" aria-label="Close find"></button></div><div id="reader" hidden></div>');
@@ -1448,10 +1448,10 @@ document.addEventListener("keydown", e => {
 }, true);
 /* ---- automatic server switching ---- */
 $("transport").closest("label").insertAdjacentHTML("afterend", '<label class="chk"><input id="autosw" type="checkbox"> Switch Wisp server automatically when it stops responding</label>');
-$("autosw").checked = store.get("bz.auto", "1") === "1"; $("autosw").onchange = () => store.set("bz.auto", $("autosw").checked ? "1" : "0");
+$("autosw").checked = store.get("bz.auto", "0") === "1"; $("autosw").onchange = () => store.set("bz.auto", $("autosw").checked ? "1" : "0");
 let fails = [], busySw = false;
 async function autoSwitch() {
-  if (busySw || store.get("bz.auto", "1") !== "1") return; busySw = true; fails = [];
+  if (busySw || store.get("bz.auto", "0") !== "1") return; busySw = true; fails = [];
   try {
     const cur = (curWisp && curWisp.use) || wispVal(), off = WOFF(), cands = wsAll().filter(u => u !== cur && !off.includes(u));
     const res = await Promise.all(cands.map(async u => [u, await probe(u, 7000)])), ok = res.filter(r => r[1]).sort((a, b) => a[1] - b[1]);

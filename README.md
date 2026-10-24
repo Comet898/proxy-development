@@ -52,7 +52,7 @@ one from inline HTML, a blob: URL or file://. Scramjet cannot run without it. So
 * Bookmarks (star in the address bar, Ctrl+D, Ctrl+Shift+B) with an optional bookmarks bar and rename/remove.
 * Address bar suggestions from bookmarks and history.
 * Download manager (Ctrl+J): file downloads are caught, shown with progress, saved automatically and can be saved again or cancelled.
-  Turn it off in Settings > Downloads to use the browser's native handling.
+  It is off by default so the proxy path stays identical to version 10; turn it on in Settings > Downloads.
 * Wisp server manager (click the status dot, or Alt+S): test every server with latency, set the preferred one, switch servers on/off,
   add your own (tested on add), "Use fastest", add the local server, reset to defaults.
 * Tab favicons, loading spinner and progress line, middle-click to close, reopen closed tab (Ctrl+Shift+T).
