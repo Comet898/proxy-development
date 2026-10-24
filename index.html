@@ -304,6 +304,7 @@ function modeNote() {
 const swOK = () => "serviceWorker" in navigator && window.isSecureContext && /^https?:$/.test(location.protocol);
 
 function engineFor() {
+  if (window.HZ_SINGLE) return "direct";
   const m = $("mode").value;
   if (m === "direct") return "direct";
   if (m === "hosted") return hostedURL() ? "hosted" : "direct";
@@ -343,6 +344,7 @@ function loadLibcurl() {
   lcP = new Promise((res, rej) => {
     if (window.libcurl && libcurl.ready) return res();
     document.addEventListener("libcurl_load", () => res(), { once: true });
+    if (window.libcurl) return;
     const s = document.createElement("script");
     s.src = new URLSearchParams(location.search).get("libcurl") || "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.1/libcurl_full.js";
     s.onload = () => { if (window.libcurl && libcurl.ready) res(); };
@@ -355,10 +357,10 @@ const esc = x => String(x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 
 /* script injected into every page: routes fetch/XHR/links/forms through libcurl */
 function directShim(base, id) {
-return '(function(){var B='+JSON.stringify(base)+',P=parent,T='+id+';'+
+return '(function(){var B='+JSON.stringify(base)+',P=(function(){var w=window;while(!w.tabNav&&w!==w.parent)w=w.parent;return w})(),T='+id+';'+
 'function abs(u){try{return new URL(u,B).href}catch(e){return u}}'+
 'function nav(u,o,b){P.tabNav(T,u,o,b)}'+
-'window.fetch=function(i,o){var u=(i&&i.url)?i.url:String(i);if(i&&i.url&&!o)o={method:i.method,headers:i.headers};return P.libcurl.fetch(abs(u),o)};'+
+'window.fetch=function(i,o){var u=(i&&i.url)?i.url:String(i);if(i&&i.url&&!o)o={method:i.method,headers:i.headers};return P.lfetch(abs(u),o)};'+
 'function fire(x,t){var e={type:t,target:x};if(typeof x["on"+t]==="function")x["on"+t](e);((x._l||{})[t]||[]).forEach(function(f){f.call(x,e)})}'+
 'function X(){this.readyState=0;this.status=0;this.statusText="";this.responseText="";this.response=null;this.responseType="";this.withCredentials=false;this.timeout=0;this._h={};this._rh=new Headers()}'+
 'X.prototype.open=function(m,u){this._m=m;this._u=abs(u);this.readyState=1};'+
@@ -368,7 +370,7 @@ return '(function(){var B='+JSON.stringify(base)+',P=parent,T='+id+';'+
 'X.prototype.overrideMimeType=function(){};X.prototype.abort=function(){};'+
 'X.prototype.addEventListener=function(t,f){this._l=this._l||{};this._l[t]=(this._l[t]||[]).concat(f)};'+
 'X.prototype.removeEventListener=function(){};'+
-'X.prototype.send=function(b){var x=this;P.libcurl.fetch(x._u,{method:x._m,headers:x._h,body:b||undefined}).then(function(r){x.status=r.status;x.statusText=r.statusText;x._rh=r.headers;x.responseURL=r.url;'+
+'X.prototype.send=function(b){var x=this;P.lfetch(x._u,{method:x._m,headers:x._h,body:b||undefined}).then(function(r){x.status=r.status;x.statusText=r.statusText;x._rh=r.headers;x.responseURL=r.url;'+
 'return x.responseType==="arraybuffer"?r.arrayBuffer():x.responseType==="blob"?r.blob():r.text()}).then(function(d){'+
 'if(x.responseType==="json"){try{d=JSON.parse(d)}catch(e){d=null}}else if(typeof d==="string")x.responseText=d;'+
 'x.response=d;x.readyState=4;fire(x,"readystatechange");fire(x,"load");fire(x,"loadend")}).catch(function(){x.readyState=4;fire(x,"readystatechange");fire(x,"error");fire(x,"loadend")})};'+
@@ -383,6 +385,14 @@ return '(function(){var B='+JSON.stringify(base)+',P=parent,T='+id+';'+
 'function hk(C,p,k){var d=Object.getOwnPropertyDescriptor(C.prototype,p);if(!d||!d.set)return;Object.defineProperty(C.prototype,p,{get:d.get,set:function(v){var s=this,u=String(v);if(/^(data:|blob:|about:|javascript:|#)/i.test(u)){d.set.call(s,v);return}P.hzAsset(abs(u),k).then(function(r){d.set.call(s,r)})},configurable:true})}'+
 'hk(HTMLImageElement,"src","blob");hk(HTMLScriptElement,"src","js");hk(HTMLLinkElement,"href","css");'+
 'var sa=Element.prototype.setAttribute;Element.prototype.setAttribute=function(n,v){var t=this.tagName,k=n=="src"?(t=="IMG"?"blob":t=="SCRIPT"?"js":0):n=="href"?(t=="LINK"?"css":0):0;if(k&&!/^(data:|blob:|about:|javascript:|#)/i.test(String(v))){var s=this;P.hzAsset(abs(String(v)),k).then(function(r){sa.call(s,n,r)});return}return sa.apply(this,arguments)};'+
+'var cu=function(){try{var u=new URL(B);u.hash=location.hash;return u}catch(e){return new URL(\"about:blank\")}};'+
+'var L={};[\"href\",\"origin\",\"protocol\",\"host\",\"hostname\",\"port\",\"pathname\",\"search\",\"hash\"].forEach(function(k){Object.defineProperty(L,k,{enumerable:true,get:function(){return cu()[k]},set:function(v){if(k==\"hash\")location.hash=v;else if(k==\"href\")nav(abs(String(v)));else{var u=cu();u[k]=v;nav(u.href)}}})});'+
+'L.assign=function(v){nav(abs(String(v)))};L.replace=L.assign;L.reload=function(){nav(B)};L.toString=function(){return cu().href};L.ancestorOrigins=[];L[Symbol.toPrimitive]=function(){return cu().href};'+
+'window.__hzloc=L;window.__hzL=function(o){return(o===window||o===document||o===top||o===parent)?L:o.location};'+
+'[\"URL\",\"documentURI\",\"baseURI\",\"domain\"].forEach(function(k){try{Object.defineProperty(Document.prototype,k,{get:function(){var u=cu();return k==\"domain\"?u.hostname:u.href},set:function(){},configurable:true})}catch(e){}});'+
+'try{Object.defineProperty(Document.prototype,\"cookie\",{get:function(){return P.hzCookie(B)},set:function(v){P.hzSetCookie(String(v),B)},configurable:true})}catch(e){}'+
+'var WS=function(u,pr){var Lc=P.libcurl;if(!Lc||!Lc.WebSocket)throw new DOMException(\"Proxy transport is not ready\",\"InvalidStateError\");var a=new URL(String(u),B);if(a.protocol==\"http:\")a.protocol=\"ws:\";else if(a.protocol==\"https:\")a.protocol=\"wss:\";return pr===undefined?new Lc.WebSocket(a.href):new Lc.WebSocket(a.href,pr)};WS.CONNECTING=0;WS.OPEN=1;WS.CLOSING=2;WS.CLOSED=3;window.WebSocket=WS;'+
+'(function(){var d=Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype,\"src\");if(!d||!d.set)return;Object.defineProperty(HTMLIFrameElement.prototype,\"src\",{get:d.get,set:function(v){var s=this,u=abs(String(v));if(!/^https?:/i.test(u)){d.set.call(s,v);return}P.hzFrame(u,T,1).then(function(h){if(h)s.srcdoc=h;else d.set.call(s,u)})},configurable:true})})();'+
 '})();';
 }
 /* ---------- subresource pipeline: CSS, scripts, images and fonts also go through libcurl/Wisp ---------- */
@@ -408,13 +418,14 @@ function asset(u, kind) {
     let r, txt, b, fin = u;
     await slot();
     try {
-      r = await libcurl.fetch(u, { redirect: "follow" });
+      r = await lfetch(u);
       if (r.status >= 400) return u;
       fin = r.url || u;
       if (kind === "css" || kind === "js") txt = await r.text(); else b = await r.blob();
     } catch (e) { return u; } finally { freeSlot(); }
     if (txt !== undefined) {
       if (kind === "css") txt = await cssRewrite(txt, fin).catch(() => txt);
+      if (kind === "js") { await loadAcorn().catch(() => {}); txt = rewriteJs(txt); }
       return URL.createObjectURL(new Blob([txt], { type: kind === "css" ? "text/css" : "text/javascript" }));
     }
     return kind === "data" && b.size < 6e6 ? await toData(b) : URL.createObjectURL(b);
@@ -422,7 +433,106 @@ function asset(u, kind) {
   acache.set(k, p); return p;
 }
 window.hzAsset = (u, k) => asset(u, k);
-async function prep(html, base, id) {
+/* ---------- cookie jar + header handling for the single-file engine ---------- */
+const jar = new Map();
+try { JSON.parse(localStorage.getItem("hzjar") || "[]").forEach(c => jar.set(c.d + "|" + c.p + "|" + c.n, c)); } catch (e) {}
+let jarT; const saveJar = () => { clearTimeout(jarT); jarT = setTimeout(() => { try { localStorage.setItem("hzjar", JSON.stringify([...jar.values()].filter(c => !c.e || c.e > Date.now()))); } catch (e) {} }, 300); };
+function setCk(line, url) {
+  let u; try { u = new URL(url); } catch (e) { return; }
+  const parts = line.split(";"), nv = parts.shift(), i = nv.indexOf("="); if (i < 1) return;
+  const c = { n: nv.slice(0, i).trim(), v: nv.slice(i + 1).trim(), d: u.hostname, h: true, p: "/", e: 0, ho: false };
+  let ma = false;
+  for (const a of parts) {
+    const j = a.indexOf("="), k = (j < 0 ? a : a.slice(0, j)).trim().toLowerCase(), x = j < 0 ? "" : a.slice(j + 1).trim();
+    if (k === "domain" && x) { c.d = x.replace(/^\./, "").toLowerCase(); c.h = false; }
+    else if (k === "path" && x[0] === "/") c.p = x;
+    else if (k === "max-age") { c.e = Date.now() + (+x) * 1000; ma = true; }
+    else if (k === "expires" && !ma) c.e = Date.parse(x) || 0;
+    else if (k === "httponly") c.ho = true;
+  }
+  if (!c.h && u.hostname !== c.d && !u.hostname.endsWith("." + c.d)) return;
+  const key = c.d + "|" + c.p + "|" + c.n;
+  if (c.e && c.e <= Date.now()) jar.delete(key); else jar.set(key, c);
+  saveJar();
+}
+function ckFor(url, js) {
+  let u; try { u = new URL(url); } catch (e) { return ""; }
+  const now = Date.now(), out = [];
+  for (const [k, c] of jar) {
+    if (c.e && c.e <= now) { jar.delete(k); continue; }
+    if (js && c.ho) continue;
+    if (!(c.h ? u.hostname === c.d : (u.hostname === c.d || u.hostname.endsWith("." + c.d)))) continue;
+    if (!u.pathname.startsWith(c.p)) continue;
+    out.push(c.n + "=" + c.v);
+  }
+  return out.join("; ");
+}
+window.hzCookie = base => ckFor(base, true);
+window.hzSetCookie = (line, base) => setCk(line, base);
+async function lfetch(u, o) {
+  o = o || {};
+  const h = { "Accept-Language": navigator.language || "en-US", "User-Agent": navigator.userAgent };
+  if (o.headers) (o.headers instanceof Headers ? [...o.headers.entries()] : Object.entries(o.headers)).forEach(([k, v]) => { h[k] = v; });
+  const ck = ckFor(u, false); if (ck && !Object.keys(h).some(k => k.toLowerCase() === "cookie")) h.Cookie = ck;
+  const r = await Promise.race([libcurl.fetch(u, Object.assign({ redirect: "follow" }, o, { headers: h })), tmo(25000, "Timed out. The Wisp server is down or too slow.")]);
+  try { (r.headers.getSetCookie ? r.headers.getSetCookie() : (r.headers.get("set-cookie") || "").split(/,(?=\s*[^;,=\s]+=)/).filter(Boolean)).forEach(c => setCk(c, r.url || u)); } catch (e) {}
+  return r;
+}
+window.lfetch = lfetch;
+/* ---------- JS rewriting (location -> faked location), same rewriter the service worker uses ---------- */
+const JS_PRE = "typeof __hzL==='undefined'&&(self.__hzL=function(o){return o.location},self.__hzloc=self.location);";
+function rewriteJs(src) {
+  if (typeof acorn === "undefined") return src;
+  let ast;
+  try { ast = acorn.parse(src, { ecmaVersion: "latest", sourceType: "script", allowReturnOutsideFunction: true, allowHashBang: true }); }
+  catch (e) { try { ast = acorn.parse(src, { ecmaVersion: "latest", sourceType: "module", allowHashBang: true }); } catch (e2) { return src; } }
+  const edits = [], ids = []; let bound = false;
+  const visit = (n, parent, key) => {
+    if (n.type === "Identifier" && n.name === "location") {
+      const t = parent && parent.type;
+      if (!parent) return;
+      if (t === "MemberExpression" && key === "property" && !parent.computed) return;
+      if ((t === "Property" || t === "MethodDefinition" || t === "PropertyDefinition") && key === "key" && !parent.computed) return;
+      if ((t === "VariableDeclarator" && key === "id") || (/Function/.test(t) && (key === "params" || key === "id")) ||
+          (t === "CatchClause" && key === "param") || (t === "ClassDeclaration" && key === "id")) { bound = true; return; }
+      if (/^(Labeled|Break|Continue|ImportSpecifier|ExportSpecifier)/.test(t)) return;
+      ids.push([n, parent, key]); return;
+    }
+    if (n.type === "MemberExpression" && !n.computed && n.property.name === "location") {
+      const left = parent && parent.type === "AssignmentExpression" && parent.left === n;
+      edits.push([n.start, n.start, "__hzL("], [n.object.end, n.end, left ? ").href" : ")"]);
+    }
+    for (const k in n) {
+      if (k === "type" || k === "start" || k === "end") continue;
+      const v = n[k];
+      if (Array.isArray(v)) { for (const c of v) if (c && typeof c.type === "string") visit(c, n, k); }
+      else if (v && typeof v.type === "string") visit(v, n, k);
+    }
+  };
+  try { visit(ast, null, null); } catch (e) { return src; }
+  if (!bound) for (const [n, parent, key] of ids) {
+    const left = parent.type === "AssignmentExpression" && parent.left === n;
+    edits.push([n.start, n.end, left ? "__hzloc.href" : (parent.type === "Property" && parent.shorthand && key === "value") ? "location: __hzloc" : "__hzloc"]);
+  }
+  if (!edits.length) return JS_PRE + src;
+  edits.sort((a, b) => b[0] - a[0] || b[1] - a[1]);
+  let out = src;
+  for (const [s, e, r] of edits) out = out.slice(0, s) + r + out.slice(e);
+  return JS_PRE + out;
+}
+
+let acP = null;
+function loadAcorn() {
+  if (window.acorn) return Promise.resolve();
+  return acP || (acP = new Promise((res, rej) => { const e = document.createElement("script"); e.src = "https://cdn.jsdelivr.net/npm/acorn@8.14.0/dist/acorn.js"; e.onload = res; e.onerror = () => { acP = null; rej(new Error("acorn")); }; document.head.appendChild(e); }));
+}
+window.hzFrame = async (u, id, depth) => {
+  try {
+    const r = await lfetch(u); if (!/html/i.test(r.headers.get("content-type") || "")) return null;
+    return (await prep(await r.text(), r.url || u, id, depth)).html;
+  } catch (e) { return null; }
+};
+async function prep(html, base, id, depth = 0) {
   const d = new DOMParser().parseFromString(html, "text/html");
   d.querySelectorAll('meta[http-equiv="Content-Security-Policy" i],meta[http-equiv="refresh" i],base,link[rel~="preload" i],link[rel~="prefetch" i],link[rel~="modulepreload" i]').forEach(e => e.remove());
   d.querySelectorAll("[integrity]").forEach(e => { e.removeAttribute("integrity"); e.removeAttribute("crossorigin"); });
@@ -437,6 +547,12 @@ async function prep(html, base, id) {
   d.querySelectorAll('script[src]:not([type="module" i])').forEach(e => hook(e, "src", "js"));
   d.querySelectorAll("style").forEach(e => jobs.push(cssRewrite(e.textContent, base).then(x => { e.textContent = x; })));
   d.querySelectorAll('[style*="url("]').forEach(e => jobs.push(cssRewrite(e.getAttribute("style"), base).then(x => e.setAttribute("style", x))));
+  await loadAcorn().catch(() => {});
+  d.querySelectorAll("script:not([src])").forEach(e => { const ty = (e.getAttribute("type") || "").toLowerCase(); if (!ty || /javascript|ecmascript|module/.test(ty)) e.textContent = rewriteJs(e.textContent); });
+  if (depth < 2) d.querySelectorAll("iframe[src]").forEach((e, i) => {
+    const v = e.getAttribute("src"); if (i > 7 || !v) return; const u = aabs(v, base); if (!/^https?:/i.test(u)) return;
+    jobs.push(window.hzFrame(u, id, depth + 1).then(h => { if (h) { e.removeAttribute("src"); e.setAttribute("srcdoc", h); } }));
+  });
   $("status").textContent = "Loading " + jobs.length + " resources ...";
   await Promise.race([Promise.allSettled(jobs), new Promise(r => setTimeout(r, 20000))]);
   const m = d.createElement("meta"); m.name = "referrer"; m.content = "no-referrer";
@@ -455,7 +571,7 @@ async function goDirect(t, url, push, opts) {
     await loadLibcurl();
     const w = await resolveWisp();
     if (directWisp !== w) { libcurl.set_websocket(w); directWisp = w; }
-    const r = await Promise.race([libcurl.fetch(url, Object.assign({ redirect: "follow" }, opts || {})), tmo(25000, "Timed out. The Wisp server is down or too slow.")]);
+    const r = await lfetch(url, opts);
     if (my !== t.token) return;
     const final = r.url || url, ct = (r.headers.get("content-type") || "").toLowerCase();
     t.url = final; if (push) t.hist[t.i] = final; t.title = final.replace(/^https?:\/\//, "");
