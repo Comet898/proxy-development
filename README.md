@@ -62,5 +62,38 @@ Notes: downloads in the lite service-worker engine still use the browser's nativ
 ## Tabs, page tools, auto-switch
 
 * Tabs: drag to reorder, right-click for the menu (duplicate, pin, groups, close others/right, reopen closed).
-* Page tools (the dots button): find in page (Alt+F), reader view (Alt+R), per-site zoom (Alt+= / Alt+- / Alt+0, remembered per site).
+* Page tools (the dots button): find in page (Alt+F), reader view (Alt+R).
 * Settings > Connection > "Switch Wisp server automatically": after 3 timeouts in a minute the fastest other server is tested and used.
+
+## Build 16: liquid glass UI, coloured logs, Discord
+
+* New look: floating glass tabs, toolbar and panels over a slowly moving gradient, spring animations, light and dark themes
+  (Settings > Appearance). Date and time on the new tab page.
+* Logs are coloured again: INFO / NET / WARN / ERR badges, coloured HTTP methods and status codes (2xx green, 3xx amber,
+  4xx/5xx red), highlighted URLs, warning and error rows tinted.
+* Contrast fixes: favicon letters and tab-group chips are now coloured with readable text instead of grey boxes with white text,
+  and dropdown option lists follow the theme.
+* Settings drawer is moved out of the toolbar on load so the glass blur does not trap it.
+* discord.com, discordapp.com, discord.gg and hcaptcha now use your real browser identity (like Google), so the request
+  headers, client hints and navigator all match the browser that is really making the request.
+
+## Build 17: black and white, one menu
+
+* Chrome is black and white again (glass kept). Only the log console stays coloured.
+* One menu button replaces the separate history, downloads, logs, fullscreen and settings buttons. It holds find, reader,
+  bookmark, History, Bookmarks, Downloads, Wisp servers, Logs, Fullscreen and Settings.
+* Each panel opens on its own with a plain title. The inner tab bar is gone, and the status dot is only a status light.
+* Everything animates out as well as in: panels, menus, suggestions, find bar, toasts and closing tabs.
+
+## Build 18: sharper, slimmer, bookmarks first
+
+* Corners are much less rounded everywhere. The toolbar and address bar are thinner, and tabs, toolbar, bookmarks bar and page are all
+  the same 6px apart.
+* The side "library" drawer is gone. History, Bookmarks, Downloads and Wisp servers open as pages in their own tab
+  (browser://history, browser://bookmarks, ...).
+* Bookmarks work like a real browser: bookmarks bar on by default (Ctrl+Shift+B toggles it), "All bookmarks" button, a double arrow for
+  the ones that do not fit, drag to reorder, right-click to open / rename / delete, middle-click for a new tab. The star opens a small
+  editor (name, Remove, Done). Bookmarks also show as tiles on the new tab page. Ctrl+Shift+O opens the bookmark manager.
+* Zoom is removed (menu items, shortcuts, per-site zoom chip).
+* Logs say what happened: JavaScript errors show the page, file and line, "Script error" is explained, HTTP errors say what the status
+  means and what breaks, and errors/warnings get an indented "why" line with the likely cause.
