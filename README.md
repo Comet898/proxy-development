@@ -97,3 +97,10 @@ Notes: downloads in the lite service-worker engine still use the browser's nativ
 * Zoom is removed (menu items, shortcuts, per-site zoom chip).
 * Logs say what happened: JavaScript errors show the page, file and line, "Script error" is explained, HTTP errors say what the status
   means and what breaks, and errors/warnings get an indented "why" line with the likely cause.
+
+## Build 19: minimal, private mode, site permissions
+
+* Flat, quiet look: no glass, gradients, moving background or hover lifts. The Wisp status is just a dot (text only when it is down).
+* Private mode (menu, or Ctrl+Shift+P): nothing is recorded (history, downloads, cookies), the browser identity is always masked (also for
+  Google/Discord), and leaving it, closing the page, or restarting after a crash erases all cookies and site data. This also erases normal-mode logins.
+* Site permissions (menu): allow or block camera, microphone, location, autoplay, clipboard and fullscreen per site. Applies on next load.

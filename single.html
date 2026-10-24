@@ -498,6 +498,71 @@ body.embed #stage{margin:0}
 #loglist .why .t,#loglist .why .lv,#loglist .why .s{visibility:hidden}
 #loglist .why .m{color:var(--mut)!important;font-style:italic}
 </style>
+<style id="b19">
+/* ===== build 19: minimal. flat surfaces, no glass, no motion except small fades ===== */
+:root[data-theme=dark],:root:not([data-theme]){--base:#0c0c0c;--bg:#121212;--surf:rgba(255,255,255,.055);--bd:rgba(255,255,255,.085);--mut:#8c8c8c;--fg:#ececec;
+  --glass:transparent;--glass2:#171717;--edge:rgba(255,255,255,.09);--hi:transparent;--sh:0 10px 34px rgba(0,0,0,.5);--blur:none}
+:root[data-theme=light]{--base:#f7f7f6;--bg:#ffffff;--surf:rgba(0,0,0,.045);--bd:rgba(0,0,0,.08);--mut:#767676;--fg:#161616;
+  --glass:transparent;--glass2:#ffffff;--edge:rgba(0,0,0,.08);--hi:transparent;--sh:0 10px 34px rgba(0,0,0,.12);--blur:none}
+:root{--ease:cubic-bezier(.3,.7,.2,1);--spring:cubic-bezier(.3,.7,.2,1)}
+body::before{display:none}
+#trail,#clock{display:none!important}
+*{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+/* chrome: flat */
+#tabs{padding:8px 14px 4px}
+.tab{background:transparent;border:0;box-shadow:none!important;color:var(--mut);animation:none!important;transition:background .15s,color .15s}
+.tab:hover{background:var(--surf);color:var(--fg);transform:none}
+.tab.on{background:var(--bg);color:var(--fg);box-shadow:0 0 0 1px var(--bd)!important}
+.tab.grp:not(.on),.tab.on.grp{box-shadow:inset 0 -2px 0 var(--g)!important}
+@keyframes fadein{from{opacity:0}}
+#newtab{background:transparent}#newtab:hover:not(:disabled){background:var(--surf);transform:none}
+#toolbar,#bbar{background:transparent!important;border:0;box-shadow:none;background-image:none!important}
+#toolbar{padding:2px 0}
+#bbar{padding:0 2px;margin-bottom:4px}
+.ib{transition:background .15s,color .15s}.ib:hover:not(:disabled){transform:none;background:var(--surf)}.ib:active:not(:disabled){transform:none;opacity:.7}
+#omni{background:var(--surf);border:1px solid transparent;box-shadow:none;transition:background .15s,border-color .15s}
+#omni:hover{background:color-mix(in srgb,var(--fg) 8%,transparent)}
+#omni:focus{background:var(--bg);border-color:color-mix(in srgb,var(--fg) 35%,transparent);box-shadow:none}
+#pill{border:0;background:transparent;padding:0 6px}
+#pill:not(.bad) span{display:none}
+#pill:hover{transform:none}
+#bbar .bm:hover,#bbar #bmmore:hover,#bbar #bmall:hover{background:var(--surf)}
+#bbar #bmall span{display:none}
+#bbar{color:var(--mut)}#bbar .bm,#bbar #bmmore,#bbar #bmall{color:var(--mut)}#bbar .bm:hover,#bbar #bmmore:hover,#bbar #bmall:hover{color:var(--fg)}
+#bbar .fav{background-image:none;text-shadow:none}
+.fav,.tile i{background-image:none!important;text-shadow:none!important;box-shadow:none!important}
+#stage{background:var(--bg);border:1px solid var(--bd);box-shadow:none;margin-bottom:10px}
+#stage:fullscreen{border:0}
+#bar.go::after{background:var(--fg);animation-duration:1.4s}
+#status{background:var(--bg);border:1px solid var(--bd);box-shadow:none}
+/* new tab page */
+#ntp{background:var(--bg)}
+#ntp h1{font:600 clamp(26px,3.4vw,38px)/1.1 Onest,system-ui;letter-spacing:-.03em;color:var(--fg);background:none;-webkit-background-clip:initial;background-clip:initial;animation:fadein .5s ease both}
+#ntpq{height:44px;box-shadow:none;background:var(--surf);border:1px solid transparent;animation:fadein .5s .05s ease both;transition:background .15s,border-color .15s}
+#ntpq:focus{transform:none;background:var(--bg);border-color:color-mix(in srgb,var(--fg) 35%,transparent);box-shadow:none}
+#quick{animation:fadein .5s .1s ease both}
+.tile{transition:background .15s}.tile:hover{transform:none;box-shadow:none;border-color:transparent;background:var(--surf)}.tile:active{transform:none}
+.tile i{box-shadow:none}
+#quick .tile{height:auto;padding:12px 4px;border:0;border-radius:10px;background:transparent;color:var(--fg)}
+#quick .tile i{width:44px;height:44px;border-radius:10px;font-size:18px}
+#quick .tile:hover{background:var(--surf);color:var(--fg)}
+/* panels */
+#settings,#lib,#logs,#sug,#ctx,#find,#bmpop,.toast{background:var(--glass2);box-shadow:var(--sh);border:1px solid var(--bd)}
+#lib{background:var(--bg);border:0;box-shadow:none}
+#settings .sh{background:var(--glass2)}
+#settings,#sug,#ctx,#find,#bmpop,.toast{animation:fadein .15s ease both!important}
+.btn,.btn:hover,.btn:active{transform:none}.btn:hover{border-color:color-mix(in srgb,var(--fg) 30%,transparent);background:var(--surf)}
+.btn.pri,.btn.pri:hover{background:var(--fg);color:var(--bg);border-color:var(--fg);box-shadow:none;filter:none}
+.it{transition:background .15s}.it:hover{transform:none}
+.srv{background:var(--surf);border:0}
+#libbody code{background:var(--surf)}
+#loglist div:hover{background:var(--surf)}
+/* private mode */
+#pvtag{display:none;flex:none;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:6px;background:var(--fg);color:var(--bg);font-size:12px;font-weight:600;cursor:pointer}
+body.private #pvtag{display:flex}
+body.private #omni{border-color:color-mix(in srgb,var(--fg) 22%,transparent)}
+body.private #ntp h1::after{content:" (private)";color:var(--mut);font-weight:500}
+</style>
 </head>
 <body>
 <div id="tabs"><div id="tablist"></div><button id="newtab" class="ib" title="New tab" aria-label="New tab"></button></div>
@@ -8544,7 +8609,7 @@ const OSP = {
 };
 const BRANDS = [["Chromium", CV], ["Not?A_Brand", "8"], ["Google Chrome", CV]];
 const CHUA = BRANDS.map(([b, v]) => '"' + b + '";v="' + v + '"').join(", ");
-const identity = () => OSP[$("ua").value] || null;
+const identity = () => OSP[window.PRIVATE && $("ua").value === "off" ? "win" : $("ua").value] || null;
 /* Google/YouTube sign-in checks that headers, client hints and navigator agree with the real browser, so these hosts get the browser's own identity instead of the spoofed one */
 const NOSPOOF = /(^|\.)(google|gstatic|googleapis|googleusercontent|youtube|ytimg|ggpht|googlevideo|recaptcha|discord|discordapp|discord-attachments-uploads-prd|hcaptcha)\.[a-z.]+$/i;
 const realHint = () => { try { const d = navigator.userAgentData; if (!d) return null; return [["sec-ch-ua", d.brands.map(b => '"' + b.brand + '";v="' + b.version + '"').join(", ")], ["sec-ch-ua-mobile", d.mobile ? "?1" : "?0"], ["sec-ch-ua-platform", '"' + d.platform + '"']]; } catch (e) { return null; } };
@@ -8656,7 +8721,7 @@ function hookFrame(t, frame) {
   const { Tap } = $scramjet, starts = new WeakMap();
   Tap.tap(frame.hooks.fetch.request, (ctx, props) => {
     starts.set(ctx.request, performance.now());
-    const real = NOSPOOF.test(hostOf(ctx)), P = real ? null : identity(), h = props.init && props.init.headers;
+    const real = !window.PRIVATE && NOSPOOF.test(hostOf(ctx)), P = real ? null : identity(), h = props.init && props.init.headers;
     try {
       const info = { m: props.init && props.init.method, hdr: Array.isArray(h) ? h.map(x => String(x[0]).toLowerCase()).join(",") : "?", body: "" };
       const b = props.init && props.init.body;
@@ -8674,7 +8739,7 @@ function hookFrame(t, frame) {
     if (!real) h.push(["User-Agent", P ? P.ua : navigator.userAgent]);
     if (P) h.push(["sec-ch-ua", CHUA], ["sec-ch-ua-mobile", "?0"], ["sec-ch-ua-platform", '"' + P.plat + '"']);
     else if (real) { const rh = realHint(); if (rh) rh.forEach(x => h.push(x)); }
-    if (!has("accept-language")) h.push(["Accept-Language", (navigator.language || "en-US") + "," + (navigator.language || "en-US").split("-")[0] + ";q=0.9"]);
+    if (!has("accept-language")) h.push(["Accept-Language", window.PRIVATE ? "en-US,en;q=0.9" : (navigator.language || "en-US") + "," + (navigator.language || "en-US").split("-")[0] + ";q=0.9"]);
   });
   Tap.tap(frame.hooks.fetch.response, (ctx, props) => {
     try { if (window.dlIntercept && dlIntercept(t, ctx, props)) return; } catch (e) { log("error", "app", "the download manager failed while inspecting a response: " + e.message); }
@@ -8689,7 +8754,7 @@ function hookFrame(t, frame) {
     }
     if (r.status >= 400) { const i = REQINFO.get(ctx.request); if (i) Promise.resolve(i.bodyP || i.body).then(bd => log("warn", "net", "  sent: " + i.m + " headers=[" + i.hdr + "] body=" + (bd || "[empty]"))); }
   });
-  Tap.tap(frame.hooks.init.pre, ctx => { try { let hn = ""; try { hn = ctx.client.url.hostname; } catch (e) {} patchRealm(ctx.window, NOSPOOF.test(hn)); } catch (e) {} });
+  Tap.tap(frame.hooks.init.pre, ctx => { try { let hn = ""; try { hn = ctx.client.url.hostname; } catch (e) {} patchRealm(ctx.window, !window.PRIVATE && NOSPOOF.test(hn)); } catch (e) {} });
   Tap.tap(frame.hooks.error.request, (ctx, props) => {
     const m = String((ctx.error && ctx.error.message) || ctx.error), u = ctx.rawrequest.rawUrl, d = ctx.rawrequest.destination;
     let real = u; try { real = $scramjet.unrewriteUrl(u, frame.context); } catch (e) {}
@@ -8907,7 +8972,7 @@ window.hzAsset = (u, k) => asset(u, k);
 /* ---------- cookie jar + header handling for the single-file engine ---------- */
 const jar = new Map();
 try { JSON.parse(localStorage.getItem("hzjar") || "[]").forEach(c => jar.set(c.d + "|" + c.p + "|" + c.n, c)); } catch (e) {}
-let jarT; const saveJar = () => { clearTimeout(jarT); jarT = setTimeout(() => { try { localStorage.setItem("hzjar", JSON.stringify([...jar.values()].filter(c => !c.e || c.e > Date.now()))); } catch (e) {} }, 300); };
+let jarT; const saveJar = () => { if (window.PRIVATE) return; clearTimeout(jarT); jarT = setTimeout(() => { try { localStorage.setItem("hzjar", JSON.stringify([...jar.values()].filter(c => !c.e || c.e > Date.now()))); } catch (e) {} }, 300); };
 function setCk(line, url) {
   let u; try { u = new URL(url); } catch (e) { return; }
   const parts = line.split(";"), nv = parts.shift(), i = nv.indexOf("="); if (i < 1) return;
@@ -9220,8 +9285,8 @@ $("mgsrv").onclick = () => libOpen("servers");
 /* ---- data ---- */
 let HIST = J("bz.hist", []), BM = J("bz.bm", []), DLS = J("bz.dl", []).map(d => d.state === "active" ? { ...d, state: "failed", err: "Interrupted" } : d);
 const WSTAT = {}, CLOSED = [];
-const saveH = (() => { let x; return () => { clearTimeout(x); x = setTimeout(() => S("bz.hist", HIST.slice(0, 3000)), 400); }; })();
-const saveD = () => S("bz.dl", DLS.slice(0, 100).map(({ blob, cancel, ...m }) => m));
+const saveH = (() => { let x; return () => { if (window.PRIVATE) return; clearTimeout(x); x = setTimeout(() => S("bz.hist", HIST.slice(0, 3000)), 400); }; })();
+const saveD = () => window.PRIVATE || S("bz.dl", DLS.slice(0, 100).map(({ blob, cancel, ...m }) => m));
 
 /* ---- library drawer ---- */
 let libV = "history";
@@ -9422,7 +9487,7 @@ $("bbar").addEventListener("dragleave", e => { const b = e.target.closest(".bm")
 $("bbar").addEventListener("drop", e => { const b = e.target.closest(".bm"); if (bmDrag < 0 || !b) return; e.preventDefault(); const to = +b.dataset.i, [m] = BM.splice(bmDrag, 1); BM.splice(to, 0, m); bmDrag = -1; S("bz.bm", BM); drawBbar(); draw(); });
 $("bbar").addEventListener("dragend", () => { bmDrag = -1; $("bbar").querySelectorAll(".over").forEach(x => x.classList.remove("over")); });
 function rec(t) {
-  if (!web(t.url) || t.title === "Loading...") return;
+  if (window.PRIVATE || !web(t.url) || t.title === "Loading...") return;
   const f = HIST[0];
   if (t.rec === t.url) { if (f && f.u === t.url && t.title) { f.t = t.title; saveH(); } return; }
   t.rec = t.url; if (f && f.u === t.url && Date.now() - f.ts < 30000) f.t = t.title; else HIST.unshift({ u: t.url, t: t.title || hn(t.url), ts: Date.now() });
@@ -9603,6 +9668,7 @@ $("dlbtn").insertAdjacentHTML("beforebegin", '<button id="ptbtn" class="ib" titl
 $("ptbtn").onclick = e => { e.stopPropagation(); const r = $("ptbtn").getBoundingClientRect(); menu(r.right - 224, r.bottom + 8, [
   ["Find in page", findOpen], ["Reader view", readerOpen], null,
   ["Bookmark this page", () => $("star").onclick()], [$("bbarchk").checked ? "Hide bookmarks bar" : "Show bookmarks bar", () => { $("bbarchk").checked = !$("bbarchk").checked; $("bbarchk").onchange(); }], ["Bookmark manager", () => libOpen("bookmarks")], null,
+  [window.PRIVATE ? "Leave private mode" : "Private mode", () => togglePrivate()], ["Site permissions", () => sitePerms()], null,
   ["History", () => libOpen("history")], ["Downloads", () => libOpen("downloads")], ["Wisp servers", () => libOpen("servers")], null,
   ["Logs", () => $("logbtn").click()], ["Fullscreen", () => $("full").click()], ["Settings", () => setTimeout(() => $("gear").click(), 0)]]); };
 document.addEventListener("keydown", e => {
@@ -9660,6 +9726,53 @@ render();
     } catch (e) {}
     return cc(tab);
   };
+})();
+</script>
+<script>
+/* build 19: private mode and per-site permissions */
+(function () {
+  const $ = id => document.getElementById(id);
+  const wipeSync = () => { try { jar.clear(); Object.keys(localStorage).filter(k => k.startsWith("hz:") || k === "hzjar").forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); } catch (e) {} };
+  const wipeAsync = async () => {
+    wipeSync();
+    try { for (const d of await indexedDB.databases()) indexedDB.deleteDatabase(d.name); } catch (e) {}
+    try { for (const k of await caches.keys()) caches.delete(k); } catch (e) {}
+  };
+  const set = on => {
+    window.PRIVATE = on; document.body.classList.toggle("private", on);
+    try { on ? localStorage.setItem("bz.pvt", "1") : localStorage.removeItem("bz.pvt"); } catch (e) {}
+  };
+  /* a private session that was never closed properly (crash, killed tab) is erased on the next start */
+  try { if (localStorage.getItem("bz.pvt") === "1") { localStorage.removeItem("bz.pvt"); wipeAsync(); } } catch (e) {}
+  const bar = $("ob"); if (bar && !$("pvtag")) bar.insertAdjacentHTML("afterend", '<span id="pvtag" title="Private mode is on. Click to leave and erase everything.">Private</span>');
+  $("pvtag").onclick = () => togglePrivate();
+  window.togglePrivate = async () => {
+    if (!window.PRIVATE) {
+      if (!confirm("Turn on private mode?\n\nWhile it is on, history, downloads and saved cookies are not kept, and your browser identity is always masked. When you leave it (or close this page) all cookies and site data are erased, including logins from normal mode.")) return;
+      set(true); LOGS.length = 0; toast0("Private mode on"); log("info", "app", "private mode on: nothing is saved and the browser identity is always masked");
+      return;
+    }
+    set(false); await wipeAsync(); LOGS.length = 0; location.reload();
+  };
+  const toast0 = m => { try { UI.toast(m); } catch (e) {} };
+  addEventListener("pagehide", () => { if (window.PRIVATE) { wipeSync(); try { indexedDB.databases().then(L => L.forEach(d => indexedDB.deleteDatabase(d.name))); } catch (e) {} localStorage.removeItem("bz.pvt"); } });
+  document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey || e.altKey) && e.shiftKey && e.key.toLowerCase() === "p") { e.preventDefault(); togglePrivate(); } }, true);
+
+  /* per-site permissions: which powerful features a site's frame may ask for. Applies on the next load of that site. */
+  const FEATS = [["camera", "Camera"], ["microphone", "Microphone"], ["geolocation", "Location"], ["autoplay", "Autoplay"], ["clipboard-read", "Clipboard"], ["fullscreen", "Fullscreen"]];
+  const BASE = "autoplay; fullscreen; gamepad; clipboard-read; clipboard-write; web-share; camera; microphone; geolocation; encrypted-media; picture-in-picture; display-capture; storage-access";
+  const P = () => { try { return JSON.parse(localStorage.getItem("bz.perm") || "{}"); } catch (e) { return {}; } };
+  const hostOf2 = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
+  const allowFor = h => { const off = P()[h] || []; return BASE.split("; ").filter(f => !off.includes(f === "clipboard-write" ? "clipboard-read" : f)).join("; ") + "; publickey-credentials-get *; publickey-credentials-create *"; };
+  window.sitePerms = () => {
+    const t = active, h = t && hostOf2(t.url); if (!h) return UI.toast("Open a site first");
+    const r = $("ptbtn").getBoundingClientRect(), off = P()[h] || [];
+    UI.menu(r.right - 240, r.bottom + 8, [[h, () => {}], null, ...FEATS.map(([k, n]) => [(off.includes(k) ? "Blocked   " : "Allowed   ") + n, () => {
+      const m = P(), l = new Set(m[h] || []); l.has(k) ? l.delete(k) : l.add(k); m[h] = [...l]; if (!m[h].length) delete m[h];
+      try { localStorage.setItem("bz.perm", JSON.stringify(m)); } catch (e) {} t.frame.setAttribute("allow", allowFor(h)); UI.toast(n + " " + (l.has(k) ? "blocked" : "allowed") + " for " + h + ". Reload the page to apply.");
+    }])]);
+  };
+  const g = window.go; window.go = function (t, input, ...r) { try { const u = resolve(String(input || "")); const h = hostOf2(u); if (h && t.frame) t.frame.setAttribute("allow", allowFor(h)); } catch (e) {} return g(t, input, ...r); };
 })();
 </script>
 </body>
