@@ -104,12 +104,12 @@
     <div class="sh"><h3>Settings</h3><button id="setclose" class="ib" aria-label="Close settings"></button></div>
     <section><h4>Browsing</h4>
       <label>Search engine <select id="engine"></select></label>
-      <label>Engine <select id="mode"><option value="auto">Auto</option><option value="sj">Scramjet (best compatibility, needs https or localhost)</option><option value="sw">Lite service worker (needs localhost or https)</option><option value="hosted">Hosted engine (your GitHub Pages link)</option><option value="direct">Single-file (works from file://)</option></select></label>
+      <label>Engine <select id="mode"><option value="auto">Auto</option><option value="sj">Scramjet v2 (best compatibility, needs https or localhost)</option><option value="sw">Lite service worker (needs localhost or https)</option><option value="hosted">Hosted engine (your GitHub Pages link)</option><option value="direct">Single-file (works from file://)</option></select></label>
       <label>Browser identity <select id="ua"><option value="win">Chrome 141 on Windows</option><option value="mac">Chrome 141 on macOS</option><option value="linux">Chrome 141 on Linux</option><option value="off">Do not spoof</option></select></label>
       <label class="chk"><input id="guard" type="checkbox"> Ask before closing this tab</label>
     </section>
     <section><h4>Connection</h4>
-      <label>Transport <select id="transport"><option value="epoxy">epoxy (default)</option><option value="libcurl">libcurl</option></select></label>
+      <label>Transport <select id="transport"><option value="auto">Auto: epoxy, then libcurl if a site fails (default)</option><option value="epoxy">epoxy only</option><option value="libcurl">libcurl only</option></select></label>
       <label>Preferred Wisp server <input id="wisp" type="text" placeholder="wss://your-server.onrender.com/" spellcheck="false"></label>
       <label>Fallback servers, one per line <textarea id="wisplist" rows="4" spellcheck="false"></textarea></label>
       <div class="row"><button id="testwisp" class="btn">Test connection</button><span id="wispnote"></span></div>
@@ -171,10 +171,10 @@ const escL = x => String(x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;"
 const fmtT = t => new Date(t).toLocaleTimeString([], { hour12: false }) + "." + String(t % 1000).padStart(3, "0");
 const lineEl = e => { const d = document.createElement("div"); d.className = e.lvl; d.innerHTML = '<span class="t">' + fmtT(e.t) + '</span> <span class="s">[' + escL(e.src) + ']</span> <span class="m">' + escL(e.msg) + '</span>'; return d; };
 const logOK = e => {
-  const f = $("logfilter").value, q = $("logq").value.toLowerCase(), nm = e.src.replace(/^hosted:/, "");
+  const f = $("logfilter").value, q = $("logq").value.toLowerCase();
   if (f === "problems" && e.lvl !== "error" && e.lvl !== "warn") return false;
-  if (f === "net" && e.lvl !== "net" && !/^(net|page)/.test(nm)) return false;
-  if (f === "engine" && !/^(engine|wisp|sj|app)/.test(nm)) return false;
+  if (f === "net" && e.lvl !== "net" && !/^(net|page)/.test(e.src)) return false;
+  if (f === "engine" && !/^(engine|wisp|sj|app|hosted)/.test(e.src)) return false;
   return !q || (e.src + " " + e.msg).toLowerCase().includes(q);
 };
 function log(lvl, src, msg) {
@@ -213,11 +213,6 @@ function watchFrame(fr, label) {
     doc.addEventListener("error", e => { const el = e.target; if (el && el.tagName && /^(IMG|SCRIPT|LINK|IFRAME|VIDEO|AUDIO|SOURCE)$/.test(el.tagName)) log("warn", label, "resource failed: <" + el.tagName.toLowerCase() + "> " + (el.src || el.href || "")); }, true);
     doc.addEventListener("load", e => { const el = e.target; if (el && el.tagName === "IFRAME") { log("net", label, "frame loaded: " + (el.getAttribute("src") || "(inline)").slice(0, 200)); try { hook(el.contentWindow); } catch (x) {} } }, true);
     for (const k of ["warn", "error"]) { const o = w.console[k].bind(w.console); w.console[k] = (...a) => { o(...a); log(k, label + ":console", a.map(String).join(" ").slice(0, 600)); }; }
-    try { new w.MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) {
-      const real = u => { const i = u.indexOf("/service/"); try { return i >= 0 ? decodeURIComponent(u.slice(i + 9)) : u; } catch (x) { return u; } };
-      if (n.tagName === "SCRIPT" && n.src) log("net", label + ":dom", "script added: " + real(n.src).slice(0, 300));
-      else if (n.tagName === "IFRAME") log("net", label + ":dom", "iframe added: " + real(n.getAttribute("src") || "(inline)").slice(0, 300));
-    } }).observe(doc, { childList: true, subtree: true }); } catch (x) {}
     doc.querySelectorAll("iframe").forEach(f => { try { hook(f.contentWindow); } catch (x) {} });
   } catch (e) {} };
   fr.addEventListener("load", () => { let u = "?"; try { u = fr.contentWindow.location.href; } catch (e) {} log("net", label, "page loaded: " + u.slice(0, 300)); hook(fr.contentWindow); });
@@ -231,7 +226,7 @@ let tabs = [], active = null, seq = 0, activeWisp = null, useDirect = false, cur
 for (const [k, v] of Object.entries(ENGINES)) $("engine").add(new Option(v[0], k));
 $("engine").value = store.get("engine", "ddg");
 $("wisp").value = store.get("wisp2", "");
-$("transport").value = store.get("transport", "epoxy");
+$("transport").value = store.get("transport2", "auto");
 $("ua").value = store.get("ua", "win");
 $("mode").value = store.get("mode", "auto");
 $("wisplist").value = store.get("wisplist3", DEFAULT_WISPS.join("\n"));
@@ -249,8 +244,8 @@ const hostedURL = () => {
 $("openhosted").onclick = () => { const h = hostedURL(); if (h) { noGuard = true; location.href = h; } else $("wispnote").textContent = "Enter a valid https link first"; };
 $("engine").onchange = () => store.set("engine", $("engine").value);
 $("wisp").onchange = () => { store.set("wisp2", wispVal()); curWisp = null; };
-$("ua").onchange = () => { store.set("ua", $("ua").value); log("info", "app", "identity set to " + $("ua").value); if (sjC) regSW().then(() => log("info", "sj", "reload pages to apply the new identity")).catch(e => log("error", "sj", e.message)); };
-$("transport").onchange = () => { store.set("transport", $("transport").value); sjKey = ""; };
+$("ua").onchange = () => { store.set("ua", $("ua").value); log("info", "app", "identity set to " + $("ua").value + " (applies to the next page you open)"); };
+$("transport").onchange = () => { store.set("transport2", $("transport").value); log("info", "app", "transport set to " + $("transport").value + " (applies to the next page you open)"); };
 $("mode").onchange = () => { store.set("mode", $("mode").value); modeNote(); };
 let noGuard = false;
 $("guard").checked = store.get("guard", "1") === "1";
@@ -327,34 +322,154 @@ async function boot(wisp) {
 /* keep the worker (and its Wisp connection) alive during long sessions such as games */
 setInterval(() => { if (activeWisp) fetch(new URL("service/__ping", location.href)).catch(() => {}); }, 20000);
 
-/* ---------- Scramjet engine (service worker in sj/, needs https or localhost) ---------- */
+/* ---------- Scramjet v2 engine (service worker in sj/, needs https or localhost) ---------- */
 const loadJs = src => new Promise((res, rej) => { const e = document.createElement("script"); e.src = src; e.onload = res; e.onerror = () => rej(new Error("Could not load " + src + ". Upload the whole sj folder next to index.html.")); document.head.appendChild(e); });
-let sjC = null, sjConn = null, sjKey = "", sjBad = false;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let sj = null, sjBoot = null, sjBad = false;
+const SJ_BASE = () => new URL("sj/", location.href).pathname;
+
+/* Chrome identity: request headers (fetch.request hook) and navigator (init.pre hook) always agree */
+const CV = "141", CFV = "141.0.7390.55";
+const OSP = {
+  win: { ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + CV + ".0.0.0 Safari/537.36", plat: "Windows", nav: "Win32", pv: "15.0.0", arch: "x86" },
+  mac: { ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + CV + ".0.0.0 Safari/537.36", plat: "macOS", nav: "MacIntel", pv: "14.6.1", arch: "arm" },
+  linux: { ua: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + CV + ".0.0.0 Safari/537.36", plat: "Linux", nav: "Linux x86_64", pv: "6.8.0", arch: "x86" }
+};
+const BRANDS = [["Chromium", CV], ["Not?A_Brand", "8"], ["Google Chrome", CV]];
+const CHUA = BRANDS.map(([b, v]) => '"' + b + '";v="' + v + '"').join(", ");
+const identity = () => OSP[$("ua").value] || null;
+
+/* the worker is registered under a versioned URL so the old v1 worker is replaced cleanly */
 async function regSW() {
-  const base = new URL("sj/", location.href).pathname;
-  const reg = await navigator.serviceWorker.register(base + "sw.js?ua=" + encodeURIComponent($("ua").value), { scope: base });
-  const sw = reg.installing || reg.waiting || reg.active;
-  if (sw && sw.state !== "activated") await new Promise(r => sw.addEventListener("statechange", () => sw.state === "activated" && r()));
-  log("info", "sj", "service worker active, identity: " + $("ua").value);
-  return reg;
+  const base = SJ_BASE();
+  const reg = await navigator.serviceWorker.register(base + "sw.js?v=2", { scope: base, updateViaCache: "none" });
+  const isNew = w => !!w && /[?&]v=2(&|$)/.test(w.scriptURL);
+  for (let i = 0; i < 240; i++) {
+    if (isNew(reg.active) && reg.active.state === "activated") { log("info", "sj", "service worker active"); return reg; }
+    const w = [reg.installing, reg.waiting].find(isNew);
+    if (w && w.state !== "activated") await new Promise(r => { const f = () => { if (w.state === "activated" || w.state === "redundant") { w.removeEventListener("statechange", f); r(); } }; w.addEventListener("statechange", f); setTimeout(r, 1000); });
+    else await sleep(50);
+  }
+  throw new Error("The Scramjet service worker did not start. Reload the page once and try again.");
 }
+
+async function makeTransport(kind, wisp) {
+  if (window.HZ_TEST_TRANSPORT) return window.HZ_TEST_TRANSPORT;            /* test hook */
+  const { AdapterTransport, FallbackTransport } = window.HZTransport, base = SJ_BASE();
+  const load = async name => { const m = await import(base + "transport/" + name + ".mjs"); return new AdapterTransport(new m.default({ wisp, websocket: wisp }), name); };
+  let t;
+  if (kind === "epoxy" || kind === "libcurl") t = await load(kind);
+  else t = new FallbackTransport(await load("epoxy"), () => load("libcurl"), log);
+  await t.init();
+  return t;
+}
+
 async function bootSJ(wisp) {
   if (!swOK()) throw new Error("Scramjet needs https or http://localhost. Host this folder on GitHub Pages, or run: python3 -m http.server 8080");
-  const base = new URL("sj/", location.href).pathname;
-  if (!sjC) {
-    await loadJs(base + "scramjet.all.js"); await loadJs(base + "baremux/index.js");
-    const { ScramjetController } = $scramjetLoadController();
-    const c = new ScramjetController({ prefix: base + "service/",
-      files: { wasm: base + "scramjet.wasm.wasm", all: base + "scramjet.all.js", sync: base + "scramjet.sync.js" },
-      flags: { cleanErrors: true, allowInvalidJs: true, allowFailedIntercepts: true } });
-    await c.init();
-    log("info", "sj", "scripts loaded, controller ready"); await regSW();
-    sjConn = new BareMux.BareMuxConnection(base + "baremux/worker.js");
-    sjC = c;
-  }
-  const tr = $("transport").value, key = tr + "|" + wisp;
-  if (key !== sjKey) { await sjConn.setTransport(base + "transport/" + tr + ".mjs", [{ wisp, websocket: wisp }]); sjKey = key; log("info", "sj", "transport " + tr + " via " + wisp); }
+  const kind = $("transport").value || "auto", key = kind + "|" + wisp;
+  if (sj && sj.key === key) return;
+  if (sjBoot && sjBoot.key === key) return sjBoot.p;
+  const p = (async () => {
+    const base = SJ_BASE();
+    if (!sj) {
+      await loadJs(base + "scramjet/scramjet.js");
+      await loadJs(base + "controller/controller.api.js");
+      await loadJs(base + "hz-transport.js");
+      const reg = await regSW();
+      const transport = await makeTransport(kind, wisp);
+      const { Controller, VERSION } = $scramjetController;
+      const controller = new Controller({
+        serviceworker: reg.active, transport,
+        config: { prefix: base + "service/", scramjetPath: base + "scramjet/scramjet.js", wasmPath: base + "scramjet/scramjet.wasm", injectPath: base + "controller/controller.inject.js" },
+        scramjetConfig: { flags: { cleanErrors: true, allowInvalidJs: true, allowFailedIntercepts: true } }
+      });
+      await controller.wait();
+      sj = { controller, reg, transport, key };
+      log("info", "sj", "Scramjet " + $scramjet.versionInfo.version + " with controller " + VERSION + " ready, transport " + kind + " via " + wisp);
+      /* a restarted worker forgets its ports: hand them over again */
+      try { const bc = new BroadcastChannel("hz-sj"); bc.onmessage = e => { if (e.data && e.data.type === "sw-start" && sj) { log("info", "sj", "service worker restarted, reconnecting"); try { sj.controller.setupMessagePort(); } catch (x) {} } }; } catch (e) {}
+      setInterval(() => { try { sj.reg.active && sj.reg.active.postMessage({ type: "hz-ping" }); } catch (e) {} }, 20000);
+    } else {
+      const transport = await makeTransport(kind, wisp);
+      sj.controller.setTransport(transport); sj.transport = transport; sj.key = key;
+      log("info", "sj", "transport " + kind + " via " + wisp);
+    }
+  })();
+  sjBoot = { key, p };
+  try { await p; } finally { if (sjBoot && sjBoot.p === p) sjBoot = null; }
 }
+
+/* make the proxied page's navigator match the request headers, and switch passkeys off
+   (a passkey is tied to the real site origin, so it can never work through a proxy) */
+function patchRealm(w) {
+  const P = identity();
+  if (P && w.Navigator) {
+    const D = (o, k, v) => w.Object.defineProperty(o, k, { get: () => v, configurable: true }), N = w.Navigator.prototype;
+    const B = BRANDS.map(([b, v]) => ({ brand: b, version: v })), FB = BRANDS.map(([b, v]) => ({ brand: b, version: v === "8" ? "8.0.0.0" : CFV }));
+    D(N, "userAgent", P.ua); D(N, "appVersion", P.ua.replace(/^Mozilla\//, "")); D(N, "platform", P.nav); D(N, "vendor", "Google Inc.");
+    D(N, "userAgentData", { brands: B, mobile: false, platform: P.plat,
+      getHighEntropyValues: () => w.Promise.resolve({ brands: B, mobile: false, platform: P.plat, platformVersion: P.pv, architecture: P.arch, bitness: "64", model: "", uaFullVersion: CFV, fullVersionList: FB, wow64: false }),
+      toJSON: () => ({ brands: B, mobile: false, platform: P.plat }) });
+    if (!w.chrome) w.chrome = { app: { isInstalled: false }, runtime: {} };
+  }
+  try {
+    const PK = w.PublicKeyCredential;
+    if (PK) { PK.isConditionalMediationAvailable = () => w.Promise.resolve(false); PK.isUserVerifyingPlatformAuthenticatorAvailable = () => w.Promise.resolve(false); }
+    const C = w.CredentialsContainer && w.CredentialsContainer.prototype;
+    if (C) for (const m of ["get", "create"]) {
+      const orig = C[m];
+      C[m] = function (o) {
+        if (o && o.publicKey) return w.Promise.reject(new w.DOMException("Passkeys are not available through the proxy.", "NotAllowedError"));
+        return orig.apply(this, arguments);
+      };
+    }
+  } catch (e) {}
+}
+
+const snippet = async b => {
+  try {
+    if (typeof b === "string") return b.slice(0, 300);
+    if (b instanceof ArrayBuffer) return new TextDecoder().decode(b.slice(0, 300));
+    if (typeof Blob !== "undefined" && b instanceof Blob) return await b.slice(0, 300).text();
+  } catch (e) {}
+  return "";
+};
+const errorPage = (url, msg) => '<!doctype html><meta charset="utf-8"><title>Could not load page</title><body style="font:15px/1.55 system-ui,sans-serif;padding:40px;max-width:640px;margin:auto;color:#222"><h2>Could not load this page</h2><p style="word-break:break-all"><code>' + escL(url) + '</code></p><p style="color:#b33">' + escL(msg) + '</p><p>This usually means the Wisp server or the site refused the connection. Try Reload, pick another server in Settings, or switch Transport to libcurl. The Logs panel has the full error.</p><p><a href="" onclick="location.reload();return false">Reload</a></p></body>';
+
+function hookFrame(t, frame) {
+  const { Tap } = $scramjet, starts = new WeakMap();
+  Tap.tap(frame.hooks.fetch.request, (ctx, props) => {
+    starts.set(ctx.request, performance.now());
+    const P = identity(), h = props.init && props.init.headers;
+    if (!Array.isArray(h)) return;
+    const has = n => h.some(x => String(x[0]).toLowerCase() === n);
+    for (let i = h.length - 1; i >= 0; i--) if (/^(user-agent|sec-ch-ua.*)$/i.test(h[i][0])) h.splice(i, 1);
+    h.push(["User-Agent", P ? P.ua : navigator.userAgent]);
+    if (P) h.push(["sec-ch-ua", CHUA], ["sec-ch-ua-mobile", "?0"], ["sec-ch-ua-platform", '"' + P.plat + '"']);
+    if (!has("accept-language")) h.push(["Accept-Language", (navigator.language || "en-US") + "," + (navigator.language || "en-US").split("-")[0] + ";q=0.9"]);
+  });
+  Tap.tap(frame.hooks.fetch.response, (ctx, props) => {
+    const r = props.response, dest = ctx.parsed.destination || "fetch", t0 = starts.get(ctx.request);
+    log(r.status >= 400 ? "warn" : "net", "net", r.status + " " + dest + " " + ctx.parsed.url.href.slice(0, 300) + (t0 ? " (" + Math.round(performance.now() - t0) + "ms)" : ""));
+    /* failed API calls: also show the start of the reply, it usually says why (captcha, missing field ...) */
+    if (r.status >= 400 && dest === "fetch" && r.body) {
+      const b = r.body;
+      if (b && typeof b.tee === "function") { const [a, c] = b.tee(); r.body = a; new Response(c).text().then(s => log("warn", "net", "  reply: " + s.slice(0, 300))).catch(() => {}); }
+      else snippet(b).then(s => s && log("warn", "net", "  reply: " + s));
+    }
+  });
+  Tap.tap(frame.hooks.init.pre, ctx => { try { patchRealm(ctx.window); } catch (e) {} });
+  Tap.tap(frame.hooks.error.request, (ctx, props) => {
+    const m = String((ctx.error && ctx.error.message) || ctx.error), u = ctx.rawrequest.rawUrl, d = ctx.rawrequest.destination;
+    log("error", "sj", "request failed: " + m.slice(0, 300));
+    if (d === "document" || d === "iframe") {
+      let real = u; try { real = $scramjet.unrewriteUrl(u, frame.context); } catch (e) {}
+      props.setResponse = { body: errorPage(real, m), status: 502, statusText: "Bad Gateway", headers: [["content-type", "text/html; charset=utf-8"]] };
+      props.suppressError = true;
+    }
+  });
+}
+
 async function goSJ(t, url) {
   t.sj = true; t.direct = false; t.hosted = false; t.url = url; t.title = "Loading...";
   if (t === active) { $("omni").value = url; $("ntp").hidden = true; t.frame.hidden = false; }
@@ -362,19 +477,21 @@ async function goSJ(t, url) {
   try {
     const w = await Promise.race([resolveWisp(), tmo(30000, "Wisp check timed out")]);
     if (!wispOK) { const er = new Error("No working Wisp server"); er.noWisp = true; throw er; }
-    await Promise.race([bootSJ(w), tmo(20000, "Scramjet took too long to start")]);
+    await Promise.race([bootSJ(w), tmo(30000, "Scramjet took too long to start")]);
   } catch (e) {
     if (e.noWisp || /Wisp/.test(e.message)) {
       t.title = "No Wisp server"; render(); $("status").textContent = "No working Wisp server. See the page for the fix.";
       t.frame.removeAttribute("src"); t.frame.srcdoc = '<body style="font:15px system-ui;padding:40px;max-width:580px;margin:auto;line-height:1.5"><h2>No working Wisp server</h2><p>Every server in your list is offline or blocking you (that is the "error code 7: Could not connect" you saw).</p><p>Fix, about a minute: open the <b>wisp-server</b> folder, run <code>npm install</code> then <code>npm start</code>, then in Settings put <code>ws://localhost:8080/</code> as the Preferred Wisp server and press Test.</p><p>To use it away from your computer, deploy that folder on Render, Railway or Fly and use its <code>wss://</code> address.</p></body>';
       return;
     }
+    log("error", "sj", e.message);
     if ($("mode").value === "auto") { sjBad = true; t.sj = false; $("status").textContent = "Scramjet failed (" + e.message + "), using the lite engine"; return go(t, url); }
-    log("error", "sj", e.message); t.title = "Error"; render(); $("status").textContent = "Error: " + e.message; return;
+    t.title = "Error"; render(); $("status").textContent = "Error: " + e.message; return;
   }
   if (!t.sjf) {
-    t.sjf = sjC.createFrame(t.frame);
-    t.sjf.addEventListener("urlchange", e => { t.url = e.url; if (t === active && document.activeElement !== $("omni")) $("omni").value = t.url; });
+    t.sjf = sj.controller.createFrame(t.frame);
+    hookFrame(t, t.sjf);
+    t.sjctx = t.sjf.context;
   }
   t.frame.removeAttribute("srcdoc");
   $("status").textContent = "Loading " + url;
@@ -386,7 +503,7 @@ async function goSJ(t, url) {
 function newTab(input) {
   const f = document.createElement("iframe");
   f.className = "page"; f.title = "page"; f.hidden = true;
-  f.setAttribute("allow", "fullscreen; autoplay; gamepad; clipboard-write; web-share");
+  f.setAttribute("allow", "fullscreen; autoplay; gamepad; clipboard-read; clipboard-write; web-share; camera; microphone; geolocation; encrypted-media; picture-in-picture; display-capture; storage-access; publickey-credentials-get *; publickey-credentials-create *");
   $("stage").appendChild(f); watchFrame(f, "page");
   const t = { id: ++seq, title: "New Tab", url: "", frame: f, hist: [], i: -1, direct: false };
   tabs.push(t); select(t);
@@ -418,7 +535,7 @@ function render() {
 function modeNote() {
   const m = $("mode").value;
   $("status").textContent = (engineFor() === "direct")
-    ? "Single-file mode: pages, scripts, styles and images all load through the proxy. No server needed." : engineFor() === "sj" ? "Scramjet engine" : "";
+    ? "Single-file mode: pages, scripts, styles and images all load through the proxy. No server needed." : engineFor() === "sj" ? "Scramjet v2 engine" : "";
 }
 const swOK = () => "serviceWorker" in navigator && window.isSecureContext && /^https?:$/.test(location.protocol);
 
@@ -737,7 +854,14 @@ function navState() {
 /* keep address bar / titles in sync with whatever the page did (links, redirects, pushState) */
 setInterval(() => {
   for (const t of tabs) {
-    if (t.sj) { try { const ti = t.frame.contentDocument && t.frame.contentDocument.title; if (ti && ti !== t.title) { t.title = ti; render(); } } catch (e) {} continue; }
+    if (t.sj) {
+      try {
+        const w = t.frame.contentWindow, ctx = t.sjctx;
+        if (w && ctx) { const href = w.location.href; if (href.startsWith(ctx.prefix.href)) { const real = $scramjet.unrewriteUrl(href, ctx); if (real && real !== t.url) { t.url = real; if (t === active && document.activeElement !== $("omni")) $("omni").value = real; } } }
+        const ti = t.frame.contentDocument && t.frame.contentDocument.title; if (ti && ti !== t.title) { t.title = ti; render(); }
+      } catch (e) {}
+      continue;
+    }
     if (!t.url || t.direct || t.hosted) continue;
     try {
       const w = t.frame.contentWindow, p = w.location.pathname;
