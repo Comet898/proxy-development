@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Browser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=Onest:wght@400;500;600;700&display=swap">
 <style>
   :root { color-scheme: light dark; --bg:#ffffff; --surf:#f2f3f6; --tabbar:#e4e7ed; --fg:#171a20; --mut:#667085; --bd:#d8dce4; --ac:#2f5fe8; --ok:#1f9d57; --bad:#d64545; --warn:#c48a10; --sh:0 10px 30px rgba(15,20,35,.18); }
   @media (prefers-color-scheme: dark) { :root { --bg:#181b21; --surf:#222630; --tabbar:#0f1115; --fg:#e8ebf1; --mut:#98a1b3; --bd:#2f3541; --ac:#7a9bff; --ok:#43c37b; --bad:#ff7a7a; --warn:#e0b04a; --sh:0 10px 30px rgba(0,0,0,.5); } }
@@ -87,6 +88,88 @@
   #loglist .error { color: var(--bad); } #loglist .warn { color: var(--warn); } #loglist .net .m { color: var(--mut); }
   @media (max-width: 640px) { #logs { height: 62vh; } }
 </style>
+<style>
+:root{--h:172;--bg:#fafbfe;--surf:#eff1f8;--tabbar:#e2e5f1;--fg:#141a30;--mut:#667091;--bd:#d9ddeb;--ac:oklch(.56 .14 var(--h));--ok:#1f9d6a;--bad:#d9475a;--warn:#c98a10;--sh:0 18px 50px rgba(20,26,60,.2);color-scheme:light}
+:root[data-theme=dark]{--bg:#0f1426;--surf:#171f3a;--tabbar:#090c19;--fg:#e9edfb;--mut:#8e9ac2;--bd:#252f55;--ac:oklch(.8 .13 var(--h));--ok:#4cd39a;--bad:#ff7b8c;--warn:#e8b74a;--sh:0 18px 50px rgba(0,0,0,.6);color-scheme:dark}
+body{font-family:Onest,"Segoe UI",system-ui,sans-serif;font-size:14px}
+#tabs{padding:8px 10px 0;gap:4px}
+.tab{height:35px;width:210px;border-radius:11px 11px 0 0;padding:0 7px 0 10px}
+.tab.on{box-shadow:none;background:var(--bg);color:var(--fg)}
+.tab .fav,.it .fav{flex:none;display:grid;place-items:center;width:18px;height:18px;border-radius:6px;font:600 11px/1 Onest,system-ui;color:#fff;overflow:hidden}
+.fav img{width:100%;height:100%;object-fit:cover}
+.tab.ld .fav{animation:spin 1s linear infinite;border-radius:50%;background:conic-gradient(var(--ac),transparent)!important;color:transparent}
+@keyframes spin{to{transform:rotate(1turn)}}
+#toolbar{gap:3px;padding:6px 10px 7px;border-bottom:0}
+.ib{border-radius:10px;position:relative;transition:background .15s,color .15s}.ib.sm{width:26px;height:26px}
+.ib.on{color:var(--ac)}.ib.on svg{fill:currentColor}
+#ob{flex:1;min-width:0;position:relative;display:flex;align-items:center;margin:0 6px}
+#lock{position:absolute;left:13px;color:var(--mut);pointer-events:none}
+#omni{width:100%;margin:0;height:38px;padding:0 44px 0 38px;border-radius:19px}
+#star{position:absolute;right:4px;width:30px;height:30px}
+#sug{position:absolute;top:44px;left:0;right:0;z-index:30;padding:6px;background:var(--bg);border:1px solid var(--bd);border-radius:16px;box-shadow:var(--sh)}
+#sug[hidden]{display:none}
+#sug div{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer}
+#sug div.on,#sug div:hover{background:var(--surf)}#sug small{color:var(--mut);margin-left:auto;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pill{cursor:pointer;border:1px solid var(--bd);background:transparent}
+#pill i{width:9px;height:9px;color:var(--mut)}
+#pill.ok i{background:var(--ok);color:var(--ok);animation:orb 2.8s ease-out infinite}
+#pill.chk i{color:var(--warn);animation:orb 1.1s ease-out infinite}#pill.bad i{color:var(--bad)}
+@keyframes orb{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 60%,transparent)}75%,100%{box-shadow:0 0 0 8px transparent}}
+.bdg{position:absolute;top:2px;right:1px;min-width:15px;height:15px;padding:0 4px;border-radius:8px;background:var(--ac);color:var(--bg);font:600 10px/15px Onest,system-ui;text-align:center}
+.bdg:empty{display:none}
+#bar{height:2px;background:transparent;overflow:hidden}
+#bar.go::after{content:"";display:block;height:100%;width:35%;background:var(--ac);animation:bar 1.1s ease-in-out infinite}
+@keyframes bar{from{margin-left:-35%}to{margin-left:100%}}
+#bbar{display:flex;gap:4px;padding:4px 12px 6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);border-bottom:1px solid var(--bd)}
+#bbar:empty,#bbar[hidden]{display:none}
+#bbar button{display:flex;align-items:center;gap:7px;flex:none;max-width:180px;height:28px;padding:0 10px 0 6px;border:0;border-radius:8px;background:transparent;cursor:pointer}
+#bbar button:hover{background:var(--surf)}#bbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ntp{background:radial-gradient(900px 420px at 50% -10%,color-mix(in srgb,var(--ac) 14%,transparent),transparent);overflow:hidden;gap:26px}
+#ntp>*{position:relative}
+#ntp h1{font:700 clamp(34px,6vw,56px)/1.05 "Bricolage Grotesque",Onest,system-ui;letter-spacing:-.035em}
+#ntpq{height:54px;font-size:16px;border-radius:27px;padding:0 26px;box-shadow:0 8px 28px color-mix(in srgb,var(--ac) 10%,transparent)}
+#trail{position:absolute!important;inset:0;width:100%;height:100%;pointer-events:none;opacity:.7}
+#trail path{fill:none;stroke:var(--ac);stroke-linecap:round;stroke-dasharray:90 1400;animation:trail 14s linear infinite;filter:drop-shadow(0 0 7px var(--ac))}
+#trail path:nth-child(2){animation-duration:19s;animation-delay:-6s;opacity:.55}#trail path:nth-child(3){animation-duration:24s;animation-delay:-13s;opacity:.35}
+@keyframes trail{from{stroke-dashoffset:0}to{stroke-dashoffset:-1490}}
+#quick{display:grid;grid-template-columns:repeat(auto-fill,92px);gap:10px;justify-content:center;width:min(640px,100%)}
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;border:0;border-radius:16px;background:transparent;cursor:pointer;color:var(--fg)}
+.tile:hover{background:var(--surf)}.tile i{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;font:600 19px Onest,system-ui;color:#fff}
+.tile span{max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+#settings,#lib{position:fixed;top:0;right:0;bottom:0;z-index:50;width:min(430px,100%);max-height:none;border-radius:0;border:0;border-left:1px solid var(--bd);background:var(--bg);box-shadow:var(--sh)}
+#settings:not([hidden]),#lib:not([hidden]){animation:slide .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes slide{from{transform:translateX(24px);opacity:0}}
+#settings h4{text-transform:none;letter-spacing:0;font-size:14px;color:var(--fg);font-weight:650}
+#settings section{gap:12px}.sw{display:flex;gap:8px}.sw button{width:28px;height:28px;border-radius:50%;border:2px solid var(--bg);cursor:pointer;outline:1px solid var(--bd)}.sw button.on{outline:2px solid var(--fg)}
+#lib{display:flex;flex-direction:column}#lib[hidden]{display:none}
+#libhead{display:flex;align-items:center;gap:6px;padding:10px 10px 6px}#libtabs{display:flex;flex:1;gap:2px;padding:3px;border-radius:12px;background:var(--surf)}
+#libtabs button{flex:1;display:flex;justify-content:center;align-items:center;gap:6px;height:32px;border:0;border-radius:9px;background:transparent;color:var(--mut);cursor:pointer;font-size:13px}
+#libtabs button.on{background:var(--bg);color:var(--fg);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+#libq{margin:4px 14px 0;height:36px;padding:0 14px;border:1px solid var(--bd);border-radius:18px;background:var(--surf);outline:none}#libq[hidden]{display:none}
+#libbody{flex:1;overflow-y:auto;padding:8px 10px 20px}
+#libbody h5{margin:14px 6px 4px;font-size:12px;font-weight:600;color:var(--mut)}
+.hd{display:flex;flex-wrap:wrap;gap:6px;padding:6px 4px}
+.btn.pri{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.it{display:flex;align-items:center;gap:11px;padding:8px;border-radius:12px;cursor:pointer}.it:hover{background:var(--surf)}
+.it .tx{flex:1;min-width:0;display:flex;flex-direction:column}.it b{font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it small{color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.it .ib{opacity:.0}.it:hover .ib,.it:focus-within .ib,.it .ib.on{opacity:1}
+.it .fav{width:30px;height:30px;border-radius:9px;font-size:14px}
+.pb{height:4px;margin-top:6px;border-radius:2px;background:var(--bd);overflow:hidden}.pb u{display:block;height:100%;background:var(--ac);transition:width .2s}
+.empty{padding:60px 24px;text-align:center;color:var(--mut)}.empty b{display:block;color:var(--fg);font-size:15px;margin-bottom:4px}
+.orb{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--mut);flex:none;color:var(--mut)}
+.orb.ok{background:var(--ok);color:var(--ok)}.orb.slow,.orb.chk{background:var(--warn);color:var(--warn)}.orb.bad{background:var(--bad);color:var(--bad)}
+.it .orb.ok{animation:orb 3s ease-out infinite}
+.srv{display:flex;align-items:center;gap:12px;padding:12px;margin:6px 4px 12px;border-radius:14px;background:var(--surf)}.srv small{display:block;color:var(--mut)}
+.chip{padding:1px 7px;border-radius:9px;background:color-mix(in srgb,var(--ac) 18%,transparent);color:var(--ac);font-size:11px;font-weight:600}
+.sw2{width:34px;height:20px;border-radius:10px;border:0;background:var(--bd);position:relative;cursor:pointer;flex:none}.sw2::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}.sw2.on{background:var(--ac)}.sw2.on::after{left:17px}
+.it.off{opacity:.5}#sadd{display:flex;gap:6px;margin:14px 4px}#sadd input{flex:1;height:34px;padding:0 12px;border:1px solid var(--bd);border-radius:10px;background:var(--surf);outline:none}
+#libbody details{margin:6px 6px;color:var(--mut)}#libbody details summary{cursor:pointer}#libbody details p{line-height:1.55}#libbody code{background:var(--surf);padding:1px 5px;border-radius:5px}
+#toasts{position:fixed;left:50%;bottom:22px;z-index:80;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{display:flex;align-items:center;gap:14px;padding:10px 16px;border-radius:14px;background:var(--fg);color:var(--bg);box-shadow:var(--sh);animation:slide .2s}.toast button{border:0;background:transparent;color:inherit;font-weight:700;cursor:pointer}
+body.embed #bbar,body.embed #bar,body.embed #lib,body.embed #toasts{display:none!important}
+@media(max-width:640px){.tab{width:150px}#libtabs button span{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
 <div id="tabs"><div id="tablist"></div><button id="newtab" class="ib" title="New tab" aria-label="New tab"></button></div>
@@ -95,9 +178,9 @@
   <button id="fwd" class="ib" title="Forward" aria-label="Forward" disabled></button>
   <button id="reload" class="ib" title="Reload" aria-label="Reload"></button>
   <button id="home" class="ib" title="New tab page" aria-label="Home"></button>
-  <input id="omni" type="text" placeholder="Search or enter address" autocomplete="off" spellcheck="false" autofocus>
+  <div id="ob"><span id="lock"></span><input id="omni" type="text" placeholder="Search or enter address" autocomplete="off" spellcheck="false" autofocus><button id="star" class="ib" aria-label="Bookmark this page"></button><div id="sug" hidden></div></div>
   <div id="pill" class="chk" title="Checking connection"><i></i><span>Checking</span></div>
-  <button id="full" class="ib" title="Fullscreen" aria-label="Fullscreen"></button>
+  <button id="dlbtn" class="ib" title="Downloads (Ctrl+J)" aria-label="Downloads"></button><button id="libbtn" class="ib" title="History and bookmarks (Ctrl+H)" aria-label="History and bookmarks"></button><button id="full" class="ib" title="Fullscreen" aria-label="Fullscreen"></button>
   <button id="logbtn" class="ib" title="Logs" aria-label="Logs"></button>
   <button id="gear" class="ib" title="Settings" aria-label="Settings"></button>
   <div id="settings" hidden>
@@ -125,11 +208,14 @@
     </section>
   </div>
 </div>
+<div id="bar"></div><div id="bbar"></div>
 <div id="status"></div>
 <div id="stage">
   <div id="ntp"><h1>Search the web</h1><input id="ntpq" type="text" placeholder="Search or enter address" autocomplete="off"><div id="quick"></div></div>
 </div>
 
+<aside id="lib" hidden aria-label="Library"><div id="libhead"><div id="libtabs"></div><button id="libx" class="ib" aria-label="Close"></button></div><input id="libq" type="search" placeholder="Search" aria-label="Search"><div id="libbody"></div></aside>
+<div id="toasts" aria-live="polite"></div>
 <div id="logs" hidden>
   <div id="logbar"><b>Logs</b>
     <select id="logfilter"><option value="all">All</option><option value="problems">Problems</option><option value="net">Network</option><option value="engine">Engine</option></select>
@@ -7856,7 +7942,8 @@ const ENGINES = {
 };
 const DEFAULT_WISPS = ["wss://motor-cycle-part.org/", "wss://wisp.terbiumon.top/", "wss://mages.io/", "wss://definitelyscience.com/", "wss://lichology.com/", "wss://anura.pro/", "wss://wisp.mercurywork.shop/", "wss://wisp.rhw.one/wisp/", "wss://pgis-wisp.onrender.com/", "wss://pgis-wisp-2.onrender.com/", "wss://area.forwardersoft.com/", "wss://truf.the-nest.at/", "wss://thoughts.forwardersoft.com/", "wss://nebulaproxy.io/", "wss://invisiproxy.com/", "wss://english.algebra.teacher.vocabulary.homework.forwardersoft.com/"];
 const normW = u => { u = (u || "").trim(); return u && !u.endsWith("/") ? u + "/" : u; };
-const wispList = () => $("wisplist").value.split(/\s+/).filter(x => /^wss?:\/\//i.test(x)).map(normW);
+const WOFF = () => { try { return JSON.parse(localStorage.getItem("bz.woff") || "[]"); } catch (e) { return []; } };
+const wispList = () => $("wisplist").value.split(/\s+/).filter(x => /^wss?:\/\//i.test(x)).map(normW).filter(x => !WOFF().includes(x));
 const wispVal = () => normW($("wisp").value) || wispList()[0] || "";
 const tmo = (ms, msg) => new Promise((_, rej) => setTimeout(() => rej(new Error(msg)), ms));
 const QUICK = [["Wikipedia", "https://en.wikipedia.org/"], ["DuckDuckGo", "https://html.duckduckgo.com/html/"], ["itch.io games", "https://itch.io/games/html5"], ["Internet Archive", "https://archive.org/"]];
@@ -7975,8 +8062,8 @@ function resolve(q) {
 function setPill(cls, text, title) { $("pill").className = cls; $("pill").lastChild.textContent = text; $("pill").title = title || text; }
 function probe(url, ms) {
   return new Promise(res => {
-    let ws, done = false;
-    const fin = v => { if (done) return; done = true; try { ws.close(); } catch (e) {} log(v ? "info" : "warn", "wisp", (v ? "handshake ok: " : "no answer: ") + url); res(v); };
+    let ws, done = false; const T0 = performance.now();
+    const fin = v => { if (done) return; done = true; try { ws.close(); } catch (e) {} log(v ? "info" : "warn", "wisp", (v ? "handshake ok: " : "no answer: ") + url); res(v ? Math.max(1, Math.round(performance.now() - T0)) : false); };
     try { ws = new WebSocket(url); } catch (e) { return res(false); }
     ws.binaryType = "arraybuffer"; ws.onmessage = () => fin(true); ws.onerror = () => fin(false); ws.onclose = () => fin(false);
     setTimeout(() => fin(false), ms || 6000);
@@ -8074,7 +8161,7 @@ async function makeTransport(kind, wisp) {
 
 async function bootSJ(wisp) {
   if (!swOK()) throw new Error("Scramjet needs https or http://localhost. Host this folder on GitHub Pages, or run: python3 -m http.server 8080");
-  const kind = $("transport").value || "auto", key = kind + "|" + wisp;
+  const kind = $("transport").value || "auto", key = kind + "|" + wisp + "|" + wispList().join(",");
   if (sj && sj.key === key) return;
   if (sjBoot && sjBoot.key === key) return sjBoot.p;
   const p = (async () => {
@@ -8169,6 +8256,7 @@ function hookFrame(t, frame) {
     if (!has("accept-language")) h.push(["Accept-Language", (navigator.language || "en-US") + "," + (navigator.language || "en-US").split("-")[0] + ";q=0.9"]);
   });
   Tap.tap(frame.hooks.fetch.response, (ctx, props) => {
+    try { if (window.dlIntercept && dlIntercept(t, ctx, props)) return; } catch (e) { log("error", "app", "download hook: " + e.message); }
     const r = props.response, dest = ctx.parsed.destination || "fetch", t0 = starts.get(ctx.request);
     log(r.status >= 400 ? "warn" : "net", "net", r.status + " " + dest + " " + ctx.parsed.url.href.slice(0, 300) + (t0 ? " (" + Math.round(performance.now() - t0) + "ms)" : ""));
     /* failed API calls: also show the start of the reply, it usually says why (captcha, missing field ...) */
@@ -8192,6 +8280,7 @@ function hookFrame(t, frame) {
 }
 
 async function goSJ(t, url) {
+  t.prev = t.url ? { url: t.url, title: t.title } : null; t.fresh = true;
   t.sj = true; t.direct = false; t.hosted = false; t.url = url; t.title = "Loading...";
   if (t === active) { $("omni").value = url; $("ntp").hidden = true; t.frame.hidden = false; }
   render(); $("status").textContent = "Starting Scramjet ...";
@@ -8216,7 +8305,7 @@ async function goSJ(t, url) {
   }
   t.frame.removeAttribute("srcdoc");
   $("status").textContent = "Loading " + url;
-  t.frame.addEventListener("load", () => { if (t === active) $("status").textContent = ""; }, { once: true });
+  t.frame.addEventListener("load", () => { t.fresh = false; if (t === active) $("status").textContent = ""; }, { once: true });
   t.sjf.go(url); navState();
 }
 
@@ -8539,7 +8628,9 @@ async function goDirect(t, url, push, opts) {
       const pr = await prep(await r.text(), final, t.id); if (my !== t.token) return; if (pr.title) t.title = pr.title;
       t.frame.removeAttribute("src"); t.frame.srcdoc = pr.html;
     } else {
-      const blob = await r.blob(); t.frame.removeAttribute("srcdoc"); t.frame.src = URL.createObjectURL(blob);
+      const blob = await r.blob();
+      if (window.dlDirect && dlDirect(final, blob, r.headers.get("content-disposition") || "", ct)) { if (push) { t.hist.pop(); t.i = t.hist.length - 1; } t.url = t.hist[t.i] || ""; t.title = t.url ? t.url.replace(/^https?:\/\//, "") : "New Tab"; if (!t.url) { t.direct = false; setTimeout(() => select(t), 0); } }
+      else { t.frame.removeAttribute("srcdoc"); t.frame.src = URL.createObjectURL(blob); }
     }
   } catch (err) {
     if (my !== t.token) return;
@@ -8661,7 +8752,285 @@ if (window.HZ_SINGLE && !hostedURL()) {
 }
 modeNote();
 window.hz = { resolve, newTab, go, tabs: () => tabs };
-newTab();
+</script>
+<script>
+/* ===== UI layer: theme, library (history, bookmarks, downloads, Wisp servers), omnibox, new tab page ===== */
+(() => {
+const J = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+const S = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+Object.assign(ICON, {
+  star: '<path d="M12 4l2.4 5 5.4.7-4 3.8 1 5.4-4.8-2.6L7.2 19l1-5.4-4-3.8L9.6 9z"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  dl: '<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/>', srv: '<rect x="4" y="4.5" width="16" height="6" rx="2"/><rect x="4" y="13.5" width="16" height="6" rx="2"/><path d="M8 7.5h.01M8 16.5h.01"/>',
+  trash: '<path d="M5 7h14M10 7V4.5h4V7M7 7l.8 12.5h8.4L17 7"/>', edit: '<path d="M5 19l1-4L16.5 4.5l3 3L9 18z"/>', lock: '<rect x="6" y="11" width="12" height="8.5" rx="2"/><path d="M9 11V8.5a3 3 0 0 1 6 0V11"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>', play: '<path d="M8 5l11 7-11 7z"/>'
+});
+const hn = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
+const hue = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+const letter = (u, t) => { const h = hn(u) || t || "?"; return '<i class="fav" style="background:hsl(' + hue(h) + ' 52% 48%)">' + esc(h[0].toUpperCase()) + '</i>'; };
+const sz = n => n > 1e9 ? (n / 1e9).toFixed(2) + " GB" : n > 1e6 ? (n / 1e6).toFixed(1) + " MB" : n > 1e3 ? Math.round(n / 1e3) + " KB" : n + " B";
+const dayName = ts => { const d = new Date(ts), n = new Date(), D = x => new Date(x).setHours(0, 0, 0, 0), k = Math.round((D(n) - D(d)) / 864e5); return k === 0 ? "Today" : k === 1 ? "Yesterday" : d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" }); };
+function toast(msg, label, fn) {
+  const t = document.createElement("div"); t.className = "toast"; t.append(msg);
+  if (label) { const b = document.createElement("button"); b.textContent = label; b.onclick = () => { fn(); t.remove(); }; t.append(b); }
+  $("toasts").append(t); setTimeout(() => t.remove(), 5000);
+}
+for (const [id, n] of [["star", "star"], ["dlbtn", "dl"], ["libbtn", "clock"]]) $(id).innerHTML = svg(n, id === "star" ? 17 : 18);
+$("lock").innerHTML = svg("search", 15); $("libx").innerHTML = svg("close");
+
+/* ---- theme ---- */
+const HUES = [[172, "Wisp"], [255, "Indigo"], [320, "Orchid"], [28, "Ember"], [100, "Moss"]];
+function theme() {
+  const m = store.get("bz.theme", "auto"), dark = m === "dark" || (m === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light"; document.documentElement.style.setProperty("--h", store.get("bz.hue", "172"));
+  document.querySelectorAll("#hues button").forEach(b => b.classList.toggle("on", b.dataset.h === store.get("bz.hue", "172")));
+}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", theme);
+const st = $("settings");
+st.querySelector(".sh").insertAdjacentHTML("afterend", '<section><h4>Appearance</h4><label>Theme <select id="theme"><option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></label><div class="sw" id="hues"></div><label class="chk"><input id="bbarchk" type="checkbox"> Show bookmarks bar</label></section><section><h4>Downloads</h4><label class="chk"><input id="dlm" type="checkbox"> Manage downloads in this browser</label><label class="chk"><input id="dla" type="checkbox"> Save files automatically when they finish</label><p class="hint">Managed downloads show progress in the Downloads panel and can be saved again without reloading the page.</p></section>');
+HUES.forEach(([h, n]) => { const b = document.createElement("button"); b.dataset.h = h; b.title = n; b.style.background = "oklch(.7 .14 " + h + ")"; b.onclick = () => { store.set("bz.hue", String(h)); theme(); }; $("hues").append(b); });
+$("theme").value = store.get("bz.theme", "auto"); $("theme").onchange = () => { store.set("bz.theme", $("theme").value); theme(); };
+for (const [id, k, d] of [["bbarchk", "bz.bbar", "1"], ["dlm", "bz.dlm", "1"], ["dla", "bz.dla", "1"]]) { $(id).checked = store.get(k, d) === "1"; $(id).onchange = () => { store.set(k, $(id).checked ? "1" : "0"); drawBbar(); }; }
+/* the Wisp fields move into the server manager; the inputs stay as the data store */
+for (const id of ["wisp", "wisplist"]) $(id).closest("label").hidden = true;
+st.querySelector("details").hidden = true;
+$("testwisp").parentElement.insertAdjacentHTML("afterbegin", '<button id="mgsrv" class="btn pri">Manage Wisp servers</button>');
+$("mgsrv").onclick = () => libOpen("servers");
+
+/* ---- data ---- */
+let HIST = J("bz.hist", []), BM = J("bz.bm", []), DLS = J("bz.dl", []).map(d => d.state === "active" ? { ...d, state: "failed", err: "Interrupted" } : d);
+const WSTAT = {}, CLOSED = [];
+const saveH = (() => { let x; return () => { clearTimeout(x); x = setTimeout(() => S("bz.hist", HIST.slice(0, 3000)), 400); }; })();
+const saveD = () => S("bz.dl", DLS.slice(0, 100).map(({ blob, cancel, ...m }) => m));
+
+/* ---- library drawer ---- */
+let libV = "history";
+const VIEWS = [["history", "clock", "History"], ["bookmarks", "star", "Bookmarks"], ["downloads", "dl", "Downloads"], ["servers", "srv", "Wisp servers"]];
+$("libtabs").innerHTML = VIEWS.map(v => '<button data-v="' + v[0] + '">' + svg(v[1], 16) + '<span>' + v[2] + '</span></button>').join("");
+const empty = (a, b) => '<div class="empty"><b>' + a + '</b>' + b + '</div>';
+const row = (u, t, meta, act, cls) => '<div class="it ' + (cls || "") + '" data-u="' + esc(u) + '">' + letter(u, t) + '<div class="tx"><b>' + esc(t || u) + '</b><small>' + esc(hn(u) || u) + (meta ? "  " + esc(meta) : "") + '</small></div>' + act + '</div>';
+const xbtn = (a, k, v, n, lab) => '<button class="ib sm" data-a="' + a + '" data-k="' + esc(k) + '" aria-label="' + lab + '" title="' + lab + '">' + svg(n, 14) + '</button>';
+const V = {
+  history() {
+    const q = $("libq").value.toLowerCase(), L = HIST.filter(h => !q || (h.u + " " + h.t).toLowerCase().includes(q)).slice(0, 400);
+    if (!L.length) return empty(q ? "No matches" : "Nothing here yet", "Pages you open are listed here. History stays in this browser.");
+    let out = '<div class="hd"><button class="btn sm" data-a="hclear">Clear history</button></div>', day = "";
+    for (const h of L) { const d = dayName(h.ts); if (d !== day) { out += "<h5>" + d + "</h5>"; day = d; } out += row(h.u, h.t, new Date(h.ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), xbtn("hdel", h.ts, 0, "close", "Remove")); }
+    return out;
+  },
+  bookmarks() {
+    const q = $("libq").value.toLowerCase(), L = BM.filter(b => !q || (b.u + " " + b.t).toLowerCase().includes(q));
+    let out = '<div class="hd"><button class="btn sm pri" data-a="bmadd">Bookmark this page</button></div>';
+    if (!L.length) return out + empty(q ? "No matches" : "No bookmarks yet", "Press the star in the address bar to save a page.");
+    return out + L.map(b => row(b.u, b.t, "", xbtn("bmren", b.u, 0, "edit", "Rename") + xbtn("bmdel", b.u, 0, "trash", "Remove"))).join("");
+  },
+  downloads() {
+    if (!DLS.length) return empty("No downloads", "Files you download through the browser show up here with their progress.");
+    return '<div class="hd"><button class="btn sm" data-a="dclear">Clear finished</button></div>' + DLS.map(d => {
+      const act = d.state === "active", pct = d.total ? Math.min(100, d.got / d.total * 100) : 0;
+      const meta = act ? sz(d.got) + (d.total ? " of " + sz(d.total) : "") : d.state === "done" ? sz(d.total || d.got) + ", done" : d.state === "cancelled" ? "Cancelled" : (d.err || "Failed");
+      const btns = (act ? xbtn("dcan", d.id, 0, "close", "Cancel") : (d.blob ? xbtn("dsave", d.id, 0, "dl", "Save again") : xbtn("dretry", d.id, 0, "reload", "Download again")) + xbtn("ddel", d.id, 0, "trash", "Remove"));
+      return '<div class="it" data-did="' + d.id + '"><i class="fav" style="background:var(--surf);color:var(--mut)">' + svg("file", 16) + '</i><div class="tx"><b>' + esc(d.name) + '</b><small>' + esc(hn(d.url)) + "  " + esc(meta) + '</small>' + (act ? '<div class="pb"><u style="width:' + (d.total ? pct : 100) + '%"></u></div>' : "") + '</div>' + btns.replace(/ib sm/g, "ib sm on") + '</div>';
+    }).join("");
+  },
+  servers() {
+    const all = wsAll(), off = WOFF(), pref = normW($("wisp").value), use = curWisp && curWisp.use, pc = $("pill").className || "chk";
+    const rows = all.map(u => {
+      const s = WSTAT[u], cls = s ? (s.ms ? (s.ms < 500 ? "ok" : "slow") : "bad") : "", on = !off.includes(u);
+      return '<div class="it ' + (on ? "" : "off") + '" data-s="' + esc(u) + '" style="cursor:default"><i class="orb ' + cls + '"></i><div class="tx"><b>' + esc(u.replace(/^wss?:\/\//, "").replace(/\/$/, "")) + '</b><small>' + (s ? (s.ms ? s.ms + " ms" : "No answer") : "Not tested") + (u === use ? "  In use" : "") + '</small></div>' +
+        (u === pref ? '<span class="chip">Preferred</span>' : '<button class="btn sm" data-a="spref" data-k="' + esc(u) + '">Prefer</button>') + '<button class="ib sm on" data-a="stest" data-k="' + esc(u) + '" title="Test" aria-label="Test">' + svg("reload", 14) + '</button>' +
+        '<button class="sw2 ' + (on ? "on" : "") + '" data-a="stog" data-k="' + esc(u) + '" role="switch" aria-checked="' + on + '" aria-label="Use this server"></button><button class="ib sm on" data-a="sdel" data-k="' + esc(u) + '" title="Remove" aria-label="Remove">' + svg("trash", 14) + '</button></div>';
+    }).join("");
+    return '<div class="srv"><i class="orb ' + pc + '"></i><div><b>' + esc($("pill").lastChild.textContent) + '</b><small>' + esc(use ? use.replace(/^wss?:\/\//, "") : "No server confirmed yet") + '</small></div></div>' +
+      '<div class="hd"><button class="btn sm" data-a="stall">Test all</button><button class="btn sm" data-a="sfast">Use fastest</button><button class="btn sm" data-a="slocal">Add local server</button><button class="btn sm" data-a="sreset">Reset list</button></div>' + rows +
+      '<form id="sadd"><input id="snew" placeholder="wss://your-server.onrender.com/" spellcheck="false" aria-label="Wisp server address"><button class="btn pri">Add server</button></form>' +
+      '<details><summary>Run your own server</summary><p>Public servers are volunteer-run and often offline. The <code>wisp-server</code> folder in this project is a ready-made one: <code>npm install</code>, then <code>npm start</code>, and add <code>ws://localhost:8080/</code> above. To use it away from your computer, deploy the folder to Render, Railway or Fly and add its <code>wss://</code> address. Browsers block plain <code>ws://</code> servers on https pages, except localhost.</p></details>';
+  }
+};
+const draw = () => { if ($("lib").hidden) return; $("libbody").innerHTML = V[libV](); $("libq").hidden = !/history|bookmarks/.test(libV); $("libtabs").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === libV)); };
+window.libOpen = v => { libV = v || libV; $("settings").hidden = true; $("lib").hidden = false; $("libq").value = ""; draw(); if (!$("libq").hidden && v !== "servers") $("libq").focus(); };
+const libClose = () => { $("lib").hidden = true; };
+$("libx").onclick = libClose; $("libtabs").onclick = e => { const b = e.target.closest("button"); if (b) { libV = b.dataset.v; $("libq").value = ""; draw(); } };
+$("libq").oninput = draw; $("libbtn").onclick = () => libOpen($("lib").hidden ? "history" : (libClose(), libV)); $("dlbtn").onclick = () => libOpen("downloads"); $("pill").onclick = () => libOpen("servers");
+$("gear").addEventListener("click", libClose);
+
+/* ---- Wisp server manager ---- */
+const wsAll = () => { const L = []; for (const x of [$("wisp").value, ...$("wisplist").value.split(/\s+/)]) { const u = normW(x); if (/^wss?:\/\//i.test(u) && !L.includes(u)) L.push(u); } return L; };
+const wsSave = L => { $("wisplist").value = L.join("\n"); store.set("wisplist4", $("wisplist").value); curWisp = null; wispFailAt = 0; };
+const setOff = L => localStorage.setItem("bz.woff", JSON.stringify(L));
+const _probe = probe; probe = (u, ms) => _probe(u, ms).then(r => { WSTAT[u] = { ms: r || 0 }; draw(); return r; });
+const _sp = setPill; setPill = (...a) => { _sp(...a); draw(); };
+async function wsAdd(u) {
+  u = normW(u); if (!/^wss?:\/\/[^\s/]+/i.test(u)) return toast("Enter an address that starts with wss:// or ws://");
+  if (location.protocol === "https:" && /^ws:\/\/(?!localhost|127\.0\.0\.1)/i.test(u)) return toast("Browsers block ws:// servers on https pages. Use a wss:// address.");
+  if (wsAll().includes(u)) return toast("That server is already in the list");
+  wsSave(wsAll().concat(u)); draw(); const ms = await probe(u, 8000); toast(ms ? "Added, answered in " + ms + " ms" : "Added, but it did not answer yet");
+}
+const A = {
+  hdel: k => { HIST = HIST.filter(h => String(h.ts) !== k); saveH(); S("bz.hist", HIST); },
+  hclear: () => { if (confirm("Clear all browsing history?")) { HIST = []; S("bz.hist", HIST); } },
+  bmadd: () => toggleBm(true), bmdel: k => { BM = BM.filter(b => b.u !== k); S("bz.bm", BM); drawBbar(); syncStar(); },
+  bmren: k => { const b = BM.find(x => x.u === k), n = prompt("Bookmark name", b.t); if (n && n.trim()) { b.t = n.trim(); S("bz.bm", BM); drawBbar(); } },
+  dclear: () => { DLS = DLS.filter(d => d.state === "active"); saveD(); }, dcan: k => { const d = DLS.find(x => x.id == k); if (d) { d.state = "cancelled"; d.cancel && d.cancel(); saveD(); } },
+  dsave: k => dlSave(DLS.find(x => x.id == k)), dretry: k => { libClose(); go(active, DLS.find(x => x.id == k).url); }, ddel: k => { DLS = DLS.filter(d => d.id != k); saveD(); },
+  spref: k => { $("wisp").value = k; store.set("wisp2", k); curWisp = null; wispFailAt = 0; setOff(WOFF().filter(x => x !== k)); },
+  stog: k => { const o = WOFF(); setOff(o.includes(k) ? o.filter(x => x !== k) : o.concat(k)); curWisp = null; wispFailAt = 0; },
+  sdel: k => { if (normW($("wisp").value) === k) { $("wisp").value = ""; store.set("wisp2", ""); } wsSave(wsAll().filter(x => x !== k)); },
+  stest: k => { probe(k, 8000); }, stall: () => { wsAll().forEach(u => probe(u, 8000)); },
+  sfast: async () => { const L = wsAll(); await Promise.all(L.map(u => probe(u, 8000))); const ok = L.filter(u => WSTAT[u] && WSTAT[u].ms).sort((a, b) => WSTAT[a].ms - WSTAT[b].ms); if (!ok.length) return toast("No server answered"); A.spref(ok[0]); wsSave(ok.concat(L.filter(u => !ok.includes(u)))); toast("Preferred server: " + ok[0].replace(/^wss?:\/\//, "") + " (" + WSTAT[ok[0]].ms + " ms)"); },
+  slocal: () => wsAdd("ws://localhost:8080/"),
+  sreset: () => { if (confirm("Replace the server list with the defaults?")) { setOff([]); $("wisp").value = ""; store.set("wisp2", ""); wsSave(DEFAULT_WISPS); } }
+};
+$("libbody").addEventListener("click", e => {
+  const b = e.target.closest("[data-a]");
+  if (b) { e.stopPropagation(); A[b.dataset.a](b.dataset.k); draw(); return; }
+  const it = e.target.closest(".it[data-u]"); if (it) { libClose(); (e.ctrlKey || e.metaKey) ? newTab(it.dataset.u) : go(active, it.dataset.u); }
+});
+$("libbody").addEventListener("auxclick", e => { const it = e.target.closest(".it[data-u]"); if (it && e.button === 1) newTab(it.dataset.u); });
+$("libbody").addEventListener("submit", e => { e.preventDefault(); const i = $("snew"); wsAdd(i.value).then(() => { i.value = ""; }); });
+
+/* ---- download manager ---- */
+const BIN = /^application\/(octet-stream|zip|x-zip.*|gzip|x-gzip|x-tar|x-7z.*|x-rar.*|vnd\.rar|x-msdownload|x-msi|vnd\.android\.package-archive|x-apple-diskimage|x-iso9660-image|x-bzip2|x-xz|java-archive|x-debian-package|x-rpm)$/i;
+function dlName(cd, url, ct) {
+  let n = "", m = /filename\*\s*=\s*(?:UTF-8'')?([^;]+)/i.exec(cd) || /filename\s*=\s*"?([^";]+)"?/i.exec(cd);
+  if (m) try { n = decodeURIComponent(m[1].trim().replace(/^"|"$/g, "")); } catch (e) { n = m[1]; }
+  if (!n) try { n = decodeURIComponent(new URL(url).pathname.split("/").filter(Boolean).pop() || ""); } catch (e) {}
+  return (n || "download").replace(/[\\/:*?"<>|]/g, "_");
+}
+let dlId = Date.now();
+function dlAdd(url, name, type, total) {
+  const d = { id: ++dlId, url, name, type, total, got: 0, state: "active" }; DLS.unshift(d); saveD(); toast("Downloading " + name, "View", () => libOpen("downloads")); return d;
+}
+function dlSave(d) {
+  const a = document.createElement("a"); a.href = d.url2 || (d.url2 = URL.createObjectURL(d.blob)); a.download = d.name; document.body.append(a); a.click(); a.remove();
+}
+async function pump(d, body) {
+  try {
+    const chunks = [];
+    if (body.getReader) { const rd = body.getReader(); d.cancel = () => rd.cancel().catch(() => {}); for (;;) { const { done, value } = await rd.read(); if (done) break; chunks.push(value); d.got += value.byteLength; draw(); badge(); } }
+    else { const b = await new Response(body).blob(); chunks.push(b); d.got = b.size; }
+    if (d.state === "cancelled") return;
+    d.blob = new Blob(chunks, { type: d.type || "application/octet-stream" }); d.total = d.got; d.state = "done";
+    if (store.get("bz.dla", "1") === "1") dlSave(d); toast("Downloaded " + d.name);
+  } catch (e) { if (d.state !== "cancelled") { d.state = "failed"; d.err = String(e.message || e); toast("Download failed: " + d.name); } }
+  saveD(); draw(); badge();
+}
+const badge = () => { const n = DLS.filter(d => d.state === "active").length; $("dlbtn").querySelector(".bdg") || $("dlbtn").insertAdjacentHTML("beforeend", '<span class="bdg"></span>'); $("dlbtn").querySelector(".bdg").textContent = n || ""; };
+/* called from the Scramjet response hook: top-level navigations that are files become managed downloads */
+window.dlIntercept = (t, ctx, props) => {
+  const r = props.response;
+  if (!r || !r.body || r.status < 200 || r.status > 299 || r.status === 204 || !ctx.request || ctx.request.mode !== "navigate" || store.get("bz.dlm", "1") !== "1") return false;
+  const g = k => { try { return r.headers.get(k) || ""; } catch (e) { return ""; } }, cd = g("content-disposition"), ct = g("content-type").split(";")[0].trim();
+  if (!/^\s*attachment/i.test(cd) && !BIN.test(ct)) return false;
+  const url = ctx.parsed.url.href, d = dlAdd(url, dlName(cd, url, ct), ct, +g("content-length") || 0);
+  pump(d, r.body); r.status = 204; r.statusText = "No Content"; r.body = null;
+  if (t.fresh) { t.fresh = false; if (t.prev) { t.url = t.prev.url; t.title = t.prev.title; } else { t.url = ""; t.title = "New Tab"; t.sj = false; } setTimeout(() => select(t), 0); }
+  setTimeout(() => { $("status").textContent = ""; render(); }, 0); return true;
+};
+window.dlDirect = (url, blob, cd, ct) => {
+  if (!/^\s*attachment/i.test(cd) && !BIN.test(ct)) return false;
+  const d = dlAdd(url, dlName(cd, url, ct), ct, blob.size); d.got = blob.size; d.blob = blob; d.state = "done"; saveD();
+  if (store.get("bz.dla", "1") === "1") dlSave(d); toast("Downloaded " + d.name); badge(); return true;
+};
+
+/* ---- bookmarks and history recording ---- */
+const web = u => /^https?:\/\//i.test(u || "");
+function toggleBm(add) {
+  const t = active; if (!t || !web(t.url)) return toast("Open a page first");
+  const i = BM.findIndex(b => b.u === t.url);
+  if (i >= 0 && !add) { BM.splice(i, 1); toast("Bookmark removed"); } else if (i < 0) { BM.unshift({ u: t.url, t: (t.title && t.title !== "Loading..." ? t.title : hn(t.url)) }); toast("Bookmarked", "Library", () => libOpen("bookmarks")); }
+  S("bz.bm", BM); drawBbar(); syncStar(); draw();
+}
+$("star").onclick = () => toggleBm(false);
+function syncStar() { const on = !!(active && BM.some(b => b.u === active.url)); $("star").classList.toggle("on", on); $("star").title = on ? "Remove bookmark" : "Bookmark this page"; }
+function drawBbar() {
+  const bar = $("bbar"); bar.hidden = store.get("bz.bbar", "1") !== "1"; bar.textContent = "";
+  BM.slice(0, 20).forEach(b => { const x = document.createElement("button"); x.title = b.u; x.innerHTML = letter(b.u, b.t) + "<span>" + esc(b.t) + "</span>"; x.onclick = () => go(active, b.u); x.onauxclick = e => { if (e.button === 1) newTab(b.u); }; bar.append(x); });
+  renderNtp();
+}
+function rec(t) {
+  if (!web(t.url) || t.title === "Loading...") return;
+  const f = HIST[0];
+  if (t.rec === t.url) { if (f && f.u === t.url && t.title) { f.t = t.title; saveH(); } return; }
+  t.rec = t.url; if (f && f.u === t.url && Date.now() - f.ts < 30000) f.t = t.title; else HIST.unshift({ u: t.url, t: t.title || hn(t.url), ts: Date.now() });
+  saveH(); if (!$("lib").hidden && libV === "history") draw();
+}
+
+/* ---- tabs ---- */
+function fav(el, t) {
+  if (t.icon) { const im = new Image(); im.onerror = () => { t.icon = ""; fav(el, t); }; im.src = t.icon; el.textContent = ""; el.style.background = "transparent"; el.append(im); return; }
+  const h = hn(t.url); el.textContent = h ? h[0].toUpperCase() : ""; el.style.background = h ? "hsl(" + hue(h) + " 52% 48%)" : "var(--bd)";
+  if (!h) el.innerHTML = svg("search", 12);
+}
+render = function () {
+  const L = $("tablist"); L.textContent = "";
+  for (const t of tabs) {
+    const d = document.createElement("div"); d.className = "tab" + (t === active ? " on" : "") + (t.title === "Loading..." ? " ld" : ""); d.title = t.title;
+    const i = document.createElement("i"); i.className = "fav"; fav(i, t);
+    const s = document.createElement("span"); s.textContent = t.title;
+    const x = document.createElement("b"); x.innerHTML = svg("close", 12); x.title = "Close tab"; x.onclick = e => { e.stopPropagation(); closeTab(t); };
+    d.onclick = () => select(t); d.onauxclick = e => { if (e.button === 1) { e.preventDefault(); closeTab(t); } };
+    d.append(i, s, x); L.append(d);
+  }
+};
+const _sel = select; select = t => { _sel(t); if (!t.url) renderNtp(); syncStar(); };
+const _ct = closeTab; closeTab = t => { if (web(t.url)) CLOSED.push(t.url); _ct(t); };
+setInterval(() => {
+  for (const t of tabs) {
+    rec(t);
+    try { if (t.sj) { const d = t.frame.contentDocument, l = d && d.querySelector('link[rel~="icon" i][href]'); if (hn(t.url) !== t.iconHost) { t.iconHost = hn(t.url); t.icon = ""; } if (l && l.href && l.href !== t.icon && !t.icon) { t.icon = l.href; render(); } } } catch (e) {}
+  }
+  if (!active) return;
+  $("bar").className = active.title === "Loading..." ? "go" : "";
+  $("lock").innerHTML = svg(/^https:/.test(active.url) ? "lock" : "search", 15); syncStar();
+}, 600);
+
+/* ---- omnibox suggestions ---- */
+const sug = $("sug"); let sugI = -1, sugL = [];
+function sugDraw() {
+  const q = $("omni").value.trim(), l = q.toLowerCase();
+  if (!q || document.activeElement !== $("omni") || (active && q === active.url)) { sug.hidden = true; return; }
+  const seen = new Set(), L = [{ u: q, t: "Search or open " + q, k: "search" }];
+  for (const [k, src] of [["star", BM], ["clock", HIST]]) for (const x of src) { if (L.length > 6) break; if (!seen.has(x.u) && (x.u + " " + x.t).toLowerCase().includes(l)) { seen.add(x.u); L.push({ u: x.u, t: x.t, k }); } }
+  sugL = L; sugI = -1; sug.hidden = false;
+  sug.innerHTML = L.map((x, i) => '<div data-i="' + i + '">' + svg(x.k, 16) + '<span>' + esc(x.t) + '</span>' + (i ? '<small>' + esc(hn(x.u)) + '</small>' : "") + '</div>').join("");
+}
+$("omni").addEventListener("input", sugDraw); $("omni").addEventListener("blur", () => { sug.hidden = true; });
+$("omni").addEventListener("keydown", e => {
+  if (sug.hidden || !/^(ArrowDown|ArrowUp|Escape)$/.test(e.key)) return; e.preventDefault();
+  if (e.key === "Escape") { sug.hidden = true; return; }
+  sugI = (sugI + (e.key === "ArrowDown" ? 1 : -1) + sugL.length) % sugL.length;
+  sug.querySelectorAll("div").forEach((d, i) => d.classList.toggle("on", i === sugI)); if (sugI > 0) $("omni").value = sugL[sugI].u;
+});
+sug.addEventListener("mousedown", e => { e.preventDefault(); const d = e.target.closest("[data-i]"); if (d) { sug.hidden = true; $("omni").blur(); go(active, sugL[d.dataset.i].u); } });
+
+/* ---- new tab page ---- */
+function renderNtp() {
+  const h = new Date().getHours(), q = $("quick"); $("ntp").querySelector("h1").textContent = h < 5 ? "Still up?" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const seen = new Set(), T = [], add = (u, t) => { const o = hn(u); if (o && !seen.has(o) && T.length < 12) { seen.add(o); T.push({ u, t: t || o }); } };
+  BM.forEach(b => add(b.u, b.t));
+  const n = {}; HIST.forEach(x => { const o = hn(x.u); if (o) (n[o] = n[o] || { c: 0, u: x.u }).c++; }); Object.entries(n).sort((a, b) => b[1].c - a[1].c).forEach(([o, v]) => add(new URL(v.u).origin + "/", o));
+  QUICK.forEach(([t, u]) => add(u, t));
+  q.innerHTML = T.map((x, i) => '<button class="tile" data-i="' + i + '" title="' + esc(x.u) + '"><i style="background:hsl(' + hue(hn(x.u)) + ' 52% 48%)">' + esc(hn(x.u)[0].toUpperCase()) + '</i><span>' + esc(x.t) + '</span></button>').join("");
+  q.onclick = e => { const b = e.target.closest(".tile"); if (b) go(active, T[b.dataset.i].u); };
+}
+if (!$("trail")) $("ntp").insertAdjacentHTML("afterbegin", '<svg id="trail" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M-40 560C200 430 330 640 560 480S860 150 1240 250" stroke-width="2.5"/><path d="M-40 200C240 330 420 60 700 190S1000 560 1240 420" stroke-width="2"/><path d="M-40 360C160 120 460 420 640 300S980 110 1240 90" stroke-width="1.6"/></svg>');
+$("ntpq").placeholder = "Search the web or enter an address";
+
+/* ---- keyboard ---- */
+document.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase(), m = e.ctrlKey || e.metaKey || e.altKey;
+  if (k === "escape") { libClose(); $("settings").hidden = true; return; }
+  if (!m) return;
+  const run = f => { e.preventDefault(); f(); };
+  if (k === "h") run(() => libOpen("history")); else if (k === "j") run(() => libOpen("downloads")); else if (k === "d") run(() => toggleBm(false));
+  else if (k === "b" && e.shiftKey || k === "o" && e.shiftKey) run(() => libOpen("bookmarks")); else if (k === "s" && e.altKey) run(() => libOpen("servers"));
+  else if (e.altKey && k === "t" && !e.shiftKey) run(() => newTab()); else if (e.altKey && k === "w") run(() => closeTab(active));
+  else if (k === "t" && e.shiftKey) run(() => { const u = CLOSED.pop(); u && newTab(u); });
+}, true);
+
+theme(); badge(); drawBbar(); newTab();
+})();
+
 </script>
 </body>
 </html>

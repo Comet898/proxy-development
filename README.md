@@ -44,3 +44,17 @@ one from inline HTML, a blob: URL or file://. Scramjet cannot run without it. So
   (including iframes), so they always agree.
 * Logs: failed API calls (HTTP 400 and up) also show the first 300 characters of the reply, which usually
   says why (captcha-required, invalid field, ...). Request bodies are never logged.
+
+## New in this version (UI overhaul)
+
+* Redesigned look: light/dark theme (Settings > Appearance), five accent colours, new tab page with your most visited sites.
+* History (Ctrl+H): grouped by day, searchable, per-item delete, clear all. Stored only in your browser.
+* Bookmarks (star in the address bar, Ctrl+D, Ctrl+Shift+B) with an optional bookmarks bar and rename/remove.
+* Address bar suggestions from bookmarks and history.
+* Download manager (Ctrl+J): file downloads are caught, shown with progress, saved automatically and can be saved again or cancelled.
+  Turn it off in Settings > Downloads to use the browser's native handling.
+* Wisp server manager (click the status dot, or Alt+S): test every server with latency, set the preferred one, switch servers on/off,
+  add your own (tested on add), "Use fastest", add the local server, reset to defaults.
+* Tab favicons, loading spinner and progress line, middle-click to close, reopen closed tab (Ctrl+Shift+T).
+
+Notes: downloads in the lite service-worker engine still use the browser's native handling. Keyboard shortcuts also work with Alt in place of Ctrl.

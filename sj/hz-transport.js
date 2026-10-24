@@ -215,13 +215,23 @@
       throw lastErr || new Error("No transport available");
     }
     connect(url, protocols, requestHeaders, onopen, onmessage, onclose, onerror) {
-      const p = this.prefs.get(url.hostname);
-      const i = p && p.until > Date.now() ? p.i : (this.cur || 0);
-      const done = this.ts.get(i);
-      const tp = done || this.get(i);
-      let inner = null, closed = false;
-      tp.then(t => { if (!closed) inner = t.connect(url, protocols, requestHeaders, onopen, onmessage, onclose, onerror); }).catch(e => onerror && onerror(e));
-      return new Proxy({}, { get: (_, k) => k === "then" ? undefined : (...a) => { if (k === "close") closed = true; return inner && inner[k] ? inner[k](...a) : undefined; } });
+      /* Scramjet expects [send, close] back, exactly like the plain transports return */
+      const order = this.order(url.hostname);
+      const innerP = (async () => {
+        let lastErr = null;
+        for (const i of order.slice(0, 3)) {
+          try {
+            const t = await Promise.race([this.get(i), new Promise((_, rej) => setTimeout(() => rej(new Error("Wisp transport start timed out")), 15000))]);
+            return await t.connect(url, protocols, requestHeaders, onopen, onmessage, onclose, onerror);
+          } catch (e) { lastErr = e; this.log("warn", "wisp", this.urls[i] + " websocket failed: " + errText(e).slice(0, 160)); }
+        }
+        throw lastErr || new Error("No transport available");
+      })();
+      innerP.catch((e) => { try { onerror && onerror(errText(e)); } catch (x) {} });
+      return [
+        async (data) => { const r = await innerP; return r[0](data); },
+        async (code, reason) => { const r = await innerP; return r[1](code, reason); }
+      ];
     }
   }
 
