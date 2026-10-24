@@ -80,7 +80,7 @@
     <label>Search engine <select id="engine"></select></label>
     <label>Engine <select id="mode"><option value="auto">Auto</option><option value="sj">Scramjet (best compatibility, needs https or localhost)</option><option value="sw">Lite service worker (needs localhost or https)</option><option value="hosted">Hosted engine (your GitHub Pages link)</option><option value="direct">Single-file (works from file://)</option></select></label>
     <label class="chk"><input id="guard" type="checkbox"> Ask before closing or leaving this tab</label>
-    <label>Transport <select id="transport"><option value="libcurl">libcurl</option><option value="epoxy">epoxy</option></select></label>
+    <label>Transport <select id="transport"><option value="epoxy">epoxy (default)</option><option value="libcurl">libcurl</option></select></label>
     <label>Preferred Wisp server <input id="wisp" type="text" placeholder="wss://your-server.onrender.com/" spellcheck="false"></label>
     <label>Fallback servers, one per line <textarea id="wisplist" rows="5" spellcheck="false"></textarea></label>
     <div class="row"><button id="testwisp" class="btn">Test connection</button><span id="wispnote"></span></div>
@@ -112,7 +112,7 @@ const ENGINES = {
   ddg: ["DuckDuckGo", "https://html.duckduckgo.com/html/?q="], bing: ["Bing", "https://www.bing.com/search?q="],
   google: ["Google", "https://www.google.com/search?q="], brave: ["Brave", "https://search.brave.com/search?q="]
 };
-const DEFAULT_WISPS = ["wss://wisp.rhw.one/wisp", "wss://pgis-wisp.onrender.com/", "wss://pgis-wisp-2.onrender.com/", "wss://wisp.mercurywork.shop/"];
+const DEFAULT_WISPS = ["wss://wisp.mercurywork.shop/", "wss://anura.pro/", "wss://wisp.rhw.one/wisp/", "wss://pgis-wisp.onrender.com/", "wss://pgis-wisp-2.onrender.com/"];
 const normW = u => { u = (u || "").trim(); return u && !u.endsWith("/") ? u + "/" : u; };
 const wispList = () => $("wisplist").value.split(/\s+/).filter(x => /^wss?:\/\//i.test(x)).map(normW);
 const wispVal = () => normW($("wisp").value) || wispList()[0] || "";
@@ -127,11 +127,11 @@ let tabs = [], active = null, seq = 0, activeWisp = null, useDirect = false, cur
 for (const [k, v] of Object.entries(ENGINES)) $("engine").add(new Option(v[0], k));
 $("engine").value = store.get("engine", "ddg");
 $("wisp").value = store.get("wisp2", "");
-$("transport").value = store.get("transport", "libcurl");
+$("transport").value = store.get("transport", "epoxy");
 $("mode").value = store.get("mode", "auto");
-$("wisplist").value = store.get("wisplist2", DEFAULT_WISPS.join("\n"));
+$("wisplist").value = store.get("wisplist3", DEFAULT_WISPS.join("\n"));
 $("hosted").value = store.get("hosted", "");
-$("wisplist").onchange = () => { store.set("wisplist2", $("wisplist").value); curWisp = null; };
+$("wisplist").onchange = () => { store.set("wisplist3", $("wisplist").value); curWisp = null; };
 $("hosted").onchange = () => store.set("hosted", $("hosted").value.trim());
 const hostedURL = () => {
   try {
@@ -304,8 +304,8 @@ function modeNote() {
 const swOK = () => "serviceWorker" in navigator && window.isSecureContext && /^https?:$/.test(location.protocol);
 
 function engineFor() {
-  if (window.HZ_SINGLE) return "direct";
   const m = $("mode").value;
+  if (window.HZ_SINGLE && m === "auto") return hostedURL() ? "hosted" : "direct";
   if (m === "direct") return "direct";
   if (m === "hosted") return hostedURL() ? "hosted" : "direct";
   if (m === "sj") return "sj";
@@ -393,6 +393,8 @@ return '(function(){var B='+JSON.stringify(base)+',P=(function(){var w=window;wh
 'try{Object.defineProperty(Document.prototype,\"cookie\",{get:function(){return P.hzCookie(B)},set:function(v){P.hzSetCookie(String(v),B)},configurable:true})}catch(e){}'+
 'var WS=function(u,pr){var Lc=P.libcurl;if(!Lc||!Lc.WebSocket)throw new DOMException(\"Proxy transport is not ready\",\"InvalidStateError\");var a=new URL(String(u),B);if(a.protocol==\"http:\")a.protocol=\"ws:\";else if(a.protocol==\"https:\")a.protocol=\"wss:\";return pr===undefined?new Lc.WebSocket(a.href):new Lc.WebSocket(a.href,pr)};WS.CONNECTING=0;WS.OPEN=1;WS.CLOSING=2;WS.CLOSED=3;window.WebSocket=WS;'+
 '(function(){var d=Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype,\"src\");if(!d||!d.set)return;Object.defineProperty(HTMLIFrameElement.prototype,\"src\",{get:d.get,set:function(v){var s=this,u=abs(String(v));if(!/^https?:/i.test(u)){d.set.call(s,v);return}P.hzFrame(u,T,1).then(function(h){if(h)s.srcdoc=h;else d.set.call(s,u)})},configurable:true})})();'+
+'(function(){function mk(st){var pre=\"hz:\"+new URL(B).origin+\":\";var ks=function(){return Object.keys(st).filter(function(x){return x.indexOf(pre)==0})};var api={getItem:function(k){return st.getItem(pre+k)},setItem:function(k,v){st.setItem(pre+k,v)},removeItem:function(k){st.removeItem(pre+k)},clear:function(){ks().forEach(function(x){st.removeItem(x)})},key:function(i){var a=ks();return a[i]===undefined?null:a[i].slice(pre.length)}};Object.defineProperty(api,\"length\",{get:function(){return ks().length}});return new Proxy(api,{get:function(t,p){if(p in t)return t[p];if(typeof p==\"symbol\")return undefined;return t.getItem(String(p))},set:function(t,p,v){t.setItem(String(p),String(v));return true},deleteProperty:function(t,p){t.removeItem(String(p));return true},has:function(t,p){return p in t||t.getItem(String(p))!==null},ownKeys:function(t){return ks().map(function(x){return x.slice(pre.length)})},getOwnPropertyDescriptor:function(t,p){return t.getItem(String(p))===null?undefined:{value:t.getItem(String(p)),writable:true,enumerable:true,configurable:true}}})}'+
+'try{var l1=mk(window.localStorage),s1=mk(window.sessionStorage);Object.defineProperty(window,\"localStorage\",{get:function(){return l1},configurable:true});Object.defineProperty(window,\"sessionStorage\",{get:function(){return s1},configurable:true})}catch(e){}})();'+
 '})();';
 }
 /* ---------- subresource pipeline: CSS, scripts, images and fonts also go through libcurl/Wisp ---------- */
@@ -678,6 +680,18 @@ if (EMBED) {
     if (j !== last && t.url) { last = j; send({ state: st }); }
   }, 250);
   send({ ready: 1 });
+}
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+/* single-file version: ask for the hosted site link on first open */
+if (window.HZ_SINGLE && !hostedURL()) {
+  const ov = document.createElement("div");
+  ov.style.cssText = "position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+  ov.innerHTML = '<div style="background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:14px;box-shadow:var(--sh);padding:22px;max-width:440px;width:100%"><h3 style="margin:0 0 6px">Connect to your hosted site</h3><p style="margin:0 0 12px;color:var(--mut)">Paste the link to your hosted copy (for example your GitHub Pages link). Browsing runs there, and this file just opens it.</p><input id="hzsetup" type="text" placeholder="https://name.github.io/repo/" spellcheck="false" style="width:100%;height:36px;padding:0 10px;border:1px solid var(--bd);border-radius:8px;background:var(--surf)"><p id="hzerr" style="color:var(--bad);margin:8px 0 0;min-height:18px"></p><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px"><button id="hzskip" class="btn">Use built-in engine instead</button><button id="hzsave" class="btn" style="background:var(--ac);color:#fff;border-color:var(--ac)">Save</button></div></div>';
+  document.body.appendChild(ov);
+  const inp = ov.querySelector("#hzsetup"); inp.focus();
+  const save = () => { $("hosted").value = inp.value.trim(); if (!hostedURL()) { ov.querySelector("#hzerr").textContent = "Enter a valid https link"; return; } store.set("hosted", $("hosted").value); ov.remove(); modeNote(); };
+  ov.querySelector("#hzsave").onclick = save; inp.onkeydown = e => { if (e.key === "Enter") save(); };
+  ov.querySelector("#hzskip").onclick = () => { $("hosted").value = ""; ov.remove(); };
 }
 modeNote();
 window.hz = { resolve, newTab, go, tabs: () => tabs };
