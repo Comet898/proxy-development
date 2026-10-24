@@ -58,3 +58,9 @@ one from inline HTML, a blob: URL or file://. Scramjet cannot run without it. So
 * Tab favicons, loading spinner and progress line, middle-click to close, reopen closed tab (Ctrl+Shift+T).
 
 Notes: downloads in the lite service-worker engine still use the browser's native handling. Keyboard shortcuts also work with Alt in place of Ctrl.
+
+## Tabs, page tools, auto-switch
+
+* Tabs: drag to reorder, right-click for the menu (duplicate, pin, groups, close others/right, reopen closed).
+* Page tools (the dots button): find in page (Alt+F), reader view (Alt+R), per-site zoom (Alt+= / Alt+- / Alt+0, remembered per site).
+* Settings > Connection > "Switch Wisp server automatically": after 3 timeouts in a minute the fastest other server is tested and used.

@@ -170,6 +170,19 @@ body.embed #bbar,body.embed #bar,body.embed #lib,body.embed #toasts{display:none
 @media(max-width:640px){.tab{width:150px}#libtabs button span{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<style>
+.tab.grp{box-shadow:inset 0 3px 0 var(--g)}.tab.pin{width:46px;padding:0 0 0 14px}.tab.pin span,.tab.pin b{display:none}.tab[draggable=true]{cursor:grab}
+.gchip{align-self:center;flex:none;margin:0 2px 0 6px;padding:2px 8px;border-radius:8px;background:var(--g);color:#fff;font:600 11px Onest,system-ui;font-style:normal;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ctx{position:fixed;z-index:90;min-width:210px;padding:6px;border-radius:14px;background:var(--bg);border:1px solid var(--bd);box-shadow:var(--sh)}#ctx[hidden]{display:none}
+#ctx button{display:block;width:100%;padding:8px 12px;border:0;border-radius:9px;background:transparent;text-align:left;cursor:pointer}#ctx button:hover{background:var(--surf)}#ctx hr{border:0;border-top:1px solid var(--bd);margin:5px 4px}
+#find{position:absolute;top:10px;right:16px;z-index:20;display:flex;align-items:center;gap:4px;padding:6px 8px;border-radius:14px;background:var(--bg);border:1px solid var(--bd);box-shadow:var(--sh)}#find[hidden]{display:none}
+#findq{width:200px;height:32px;padding:0 12px;border:1px solid var(--bd);border-radius:10px;background:var(--surf);outline:none}#findn{color:var(--mut);font-size:12px;min-width:56px}
+#findp svg{transform:rotate(90deg)}#findnx svg{transform:rotate(90deg)}
+#reader{position:absolute;inset:0;z-index:15;overflow:auto;background:var(--bg)}#reader[hidden]{display:none}
+.rb{max-width:700px;margin:0 auto;padding:28px 24px 90px;font:20px/1.75 Georgia,"Times New Roman",serif}.rb h1{font:700 36px/1.15 "Bricolage Grotesque",Onest,system-ui;letter-spacing:-.02em;margin:26px 0 22px}
+.rb img{max-width:100%;height:auto;border-radius:10px}.rb a{color:var(--ac)}.rb pre{overflow:auto;background:var(--surf);padding:12px;border-radius:10px;font-size:14px}.rb .btn{font-family:Onest,system-ui}
+#zoomchip{position:absolute;right:38px;height:24px;padding:0 8px;border:0;border-radius:12px;background:var(--surf);color:var(--fg);font-size:12px;cursor:pointer}#zoomchip[hidden]{display:none}
+</style>
 </head>
 <body>
 <div id="tabs"><div id="tablist"></div><button id="newtab" class="ib" title="New tab" aria-label="New tab"></button></div>
@@ -1329,7 +1342,137 @@ document.addEventListener("keydown", e => {
   else if (k === "t" && e.shiftKey) run(() => { const u = CLOSED.pop(); u && newTab(u); });
 }, true);
 
+window.UI = { toast, wsAll, hn, hue, web };
 theme(); badge(); drawBbar(); newTab();
+})();
+
+</script>
+<script>
+/* ===== tabs (drag, groups, menu), page tools (zoom, find, reader), automatic server switching ===== */
+(() => {
+const { toast, wsAll, hn, hue, web } = UI;
+Object.assign(ICON, { dots: '<circle cx="12" cy="5.5" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="18.5" r="1.3"/>' });
+const CLOSED2 = [], ZS = [.5, .67, .8, .9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+const docOf = t => { try { const d = t && t.url && t.frame.contentDocument; return d && d.documentElement ? d : null; } catch (e) { return null; } };
+/* ---- context menu ---- */
+const ctx = document.body.appendChild(Object.assign(document.createElement("div"), { id: "ctx", hidden: true }));
+const hideMenu = () => { ctx.hidden = true; };
+function menu(x, y, items) {
+  ctx.textContent = "";
+  for (const it of items) { if (!it) { ctx.append(document.createElement("hr")); continue; } const b = document.createElement("button"); b.textContent = it[0]; b.onclick = () => { hideMenu(); it[1](); }; ctx.append(b); }
+  ctx.hidden = false; ctx.style.left = Math.max(4, Math.min(x, innerWidth - ctx.offsetWidth - 8)) + "px"; ctx.style.top = Math.max(4, Math.min(y, innerHeight - ctx.offsetHeight - 8)) + "px";
+}
+document.addEventListener("mousedown", e => { if (!ctx.contains(e.target)) hideMenu(); }, true); addEventListener("blur", hideMenu);
+/* ---- tabs: drag to reorder, pins, groups ---- */
+let drag = null;
+const place = t => { const pin = tabs.filter(x => x.pin), rest = tabs.filter(x => !x.pin); tabs.length = 0; tabs.push(...pin, ...rest); };
+function setGroup(t, g) {
+  t.group = g || ""; if (!g) return render();
+  const others = tabs.filter(x => x !== t && x.group === g);
+  if (others.length) { tabs.splice(tabs.indexOf(t), 1); tabs.splice(tabs.indexOf(others[others.length - 1]) + 1, 0, t); }
+  render();
+}
+function tabMenu(e, t) {
+  e.preventDefault(); const gs = [...new Set(tabs.map(x => x.group).filter(Boolean))];
+  menu(e.clientX, e.clientY, [
+    ["Reload", () => { select(t); $("reload").click(); }], ["Duplicate", () => t.url && newTab(t.url)], [t.pin ? "Unpin tab" : "Pin tab", () => { t.pin = !t.pin; place(); render(); }], null,
+    ...gs.filter(g => g !== t.group).map(g => ["Add to group: " + g, () => setGroup(t, g)]),
+    ["New group...", () => { const g = prompt("Group name"); if (g && g.trim()) setGroup(t, g.trim()); }], ...(t.group ? [["Remove from group", () => setGroup(t, "")]] : []), null,
+    ["Close tab", () => closeTab(t)], ["Close other tabs", () => tabs.filter(x => x !== t && !x.pin).forEach(closeTab)], ["Close tabs to the right", () => tabs.slice(tabs.indexOf(t) + 1).filter(x => !x.pin).forEach(closeTab)], null,
+    ["Reopen closed tab", () => { const u = CLOSED2.pop(); u ? newTab(u) : toast("No closed tabs"); }]
+  ]);
+}
+const _r = render;
+render = function () {
+  _r(); const kids = [...$("tablist").children]; let lastG = "";
+  kids.forEach((d, i) => {
+    const t = tabs[i]; if (!t) return;
+    if (t.pin) d.classList.add("pin");
+    if (t.group) { d.classList.add("grp"); d.style.setProperty("--g", "hsl(" + hue(t.group) + " 60% 52%)"); d.title = t.group + ": " + t.title; }
+    d.draggable = true; d.ondragstart = e => { drag = t; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", t.url || ""); } catch (x) {} };
+    d.ondragover = e => e.preventDefault();
+    d.ondrop = e => { e.preventDefault(); if (!drag || drag === t) return; const to = tabs.indexOf(t), from = tabs.indexOf(drag); tabs.splice(from, 1); tabs.splice(from < to ? tabs.indexOf(t) + 1 : tabs.indexOf(t), 0, drag); drag = null; place(); render(); };
+    d.oncontextmenu = e => tabMenu(e, t);
+  });
+  /* one label per group, placed before its first tab */
+  kids.forEach((d, i) => { const g = tabs[i] && tabs[i].group; if (g && !kids.slice(0, i).some((_, j) => tabs[j].group === g)) { const c = document.createElement("em"); c.className = "gchip"; c.textContent = g; c.style.setProperty("--g", "hsl(" + hue(g) + " 60% 52%)"); c.title = "Click to rename group"; c.onclick = () => { const n = prompt("Group name", g); if (n && n.trim()) tabs.forEach(x => { if (x.group === g) x.group = n.trim(); }), render(); }; d.before(c); } });
+};
+const _c = closeTab; closeTab = t => { if (web(t.url)) CLOSED2.push(t.url); _c(t); };
+$("tablist").addEventListener("contextmenu", e => { if (e.target === $("tablist")) { e.preventDefault(); menu(e.clientX, e.clientY, [["New tab", () => newTab()], ["Reopen closed tab", () => { const u = CLOSED2.pop(); u ? newTab(u) : toast("No closed tabs"); }]]); } });
+/* ---- per-site zoom ---- */
+const zoomMap = () => { try { return JSON.parse(localStorage.getItem("bz.zoom") || "{}"); } catch (e) { return {}; } };
+const zoomOf = t => zoomMap()[hn(t.url)] || 1;
+$("ob").insertAdjacentHTML("afterbegin", '<button id="zoomchip" hidden title="Reset zoom for this site"></button>');
+function setZoom(z) {
+  if (!active || !web(active.url)) return; const m = zoomMap(), h = hn(active.url); z = Math.min(3, Math.max(.5, z)); if (z === 1) delete m[h]; else m[h] = z;
+  localStorage.setItem("bz.zoom", JSON.stringify(m)); applyZoom(); toast(h + " at " + Math.round(z * 100) + "%");
+}
+function stepZoom(dir) { const z = zoomOf(active); let i = ZS.findIndex(x => x >= z - .001); i = Math.min(ZS.length - 1, Math.max(0, i + dir)); setZoom(ZS[i]); }
+function applyZoom() { const d = docOf(active), z = active ? zoomOf(active) : 1; if (d && String(d.documentElement.style.zoom || 1) !== String(z)) d.documentElement.style.zoom = z === 1 ? "" : z; $("zoomchip").hidden = z === 1; $("zoomchip").textContent = Math.round(z * 100) + "%"; }
+$("zoomchip").onclick = () => setZoom(1); setInterval(applyZoom, 700);
+/* ---- find in page ---- */
+$("stage").insertAdjacentHTML("beforeend", '<div id="find" hidden><input id="findq" placeholder="Find in page" aria-label="Find in page" autocomplete="off"><span id="findn"></span><button id="findp" class="ib sm" aria-label="Previous match"></button><button id="findnx" class="ib sm" aria-label="Next match"></button><button id="findx" class="ib sm" aria-label="Close find"></button></div><div id="reader" hidden></div>');
+for (const [id, n] of [["findp", "fwd"], ["findnx", "fwd"], ["findx", "close"]]) $(id).innerHTML = svg(n, 14);
+$("findp").innerHTML = svg("back", 14);
+function findGo(back) {
+  const q = $("findq").value, d = docOf(active); if (!q) { $("findn").textContent = ""; return; } if (!d) { $("findn").textContent = "Unavailable"; return; }
+  const text = (d.body && d.body.innerText || "").toLowerCase(), ql = q.toLowerCase(); let n = 0, i = -1; while ((i = text.indexOf(ql, i + 1)) >= 0) n++;
+  let ok = false; try { ok = d.defaultView.find(q, false, !!back, true, false, false, false); } catch (e) {}
+  $("findn").textContent = n ? (ok || n ? n + (n === 1 ? " match" : " matches") : "") : "No matches";
+}
+const findOpen = () => { $("find").hidden = false; $("findq").focus(); $("findq").select(); };
+$("findq").oninput = () => findGo(false); $("findq").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); findGo(e.shiftKey); } if (e.key === "Escape") $("find").hidden = true; };
+$("findp").onclick = () => findGo(true); $("findnx").onclick = () => findGo(false); $("findx").onclick = () => { $("find").hidden = true; };
+/* ---- reader view ---- */
+const R = $("reader");
+function readerOpen() {
+  const d = docOf(active); if (!d) return toast("Reader view is not available for this page");
+  let best = null, bs = 0;
+  d.querySelectorAll("article,main,section,div").forEach(e => { let s = 0; e.querySelectorAll(":scope > p").forEach(p => { s += p.textContent.trim().length; }); if (e.tagName === "ARTICLE") s *= 1.5; if (s > bs) { bs = s; best = e; } });
+  if (!best || bs < 200) return toast("No article found on this page");
+  const c = best.cloneNode(true);
+  c.querySelectorAll("script,style,nav,aside,form,iframe,button,noscript,svg,header,footer,[role=navigation],[aria-hidden=true]").forEach(x => x.remove());
+  c.querySelectorAll("*").forEach(x => { for (const a of [...x.attributes]) if (!/^(href|src|alt)$/.test(a.name) || /^\s*javascript:/i.test(a.value)) x.removeAttribute(a.name); });
+  const h = d.querySelector("h1");
+  R.innerHTML = '<div class="rb"><button class="btn" id="rx">Exit reader view</button><h1></h1><div id="rc"></div></div>';
+  R.querySelector("h1").textContent = (h && h.textContent.trim()) || d.title; R.querySelector("#rc").append(document.importNode(c, true));
+  R.hidden = false; R.scrollTop = 0; $("rx").onclick = () => { R.hidden = true; };
+}
+R.addEventListener("click", e => {
+  const a = e.target.closest("a[href]"); if (!a) return; e.preventDefault();
+  let u = a.href; try { if (active.sjctx) u = $scramjet.unrewriteUrl(u, active.sjctx) || u; } catch (x) {}
+  R.hidden = true; go(active, u);
+});
+const _s = select; select = t => { R.hidden = true; $("find").hidden = true; _s(t); };
+/* ---- page tools menu ---- */
+$("dlbtn").insertAdjacentHTML("beforebegin", '<button id="ptbtn" class="ib" title="Page tools" aria-label="Page tools"></button>'); $("ptbtn").innerHTML = svg("dots");
+$("ptbtn").onclick = e => { e.stopPropagation(); const r = $("ptbtn").getBoundingClientRect(); menu(r.left - 150, r.bottom + 6, [
+  ["Find in page", findOpen], ["Reader view", readerOpen], null, ["Zoom in", () => stepZoom(1)], ["Zoom out", () => stepZoom(-1)], ["Reset zoom (" + Math.round((active ? zoomOf(active) : 1) * 100) + "%)", () => setZoom(1)], null,
+  ["Bookmark this page", () => $("star").click()], ["Library", () => libOpen("history")], ["Wisp servers", () => libOpen("servers")]]); };
+document.addEventListener("keydown", e => {
+  if (!(e.ctrlKey || e.metaKey || e.altKey)) return; const k = e.key, run = f => { e.preventDefault(); f(); };
+  if (k === "f" || k === "F") { if (e.altKey || e.ctrlKey) run(findOpen); } else if (e.altKey && (k === "r" || k === "R")) run(readerOpen);
+  else if (e.altKey && (k === "=" || k === "+")) run(() => stepZoom(1)); else if (e.altKey && k === "-") run(() => stepZoom(-1)); else if (e.altKey && k === "0") run(() => setZoom(1));
+}, true);
+/* ---- automatic server switching ---- */
+$("transport").closest("label").insertAdjacentHTML("afterend", '<label class="chk"><input id="autosw" type="checkbox"> Switch Wisp server automatically when it stops responding</label>');
+$("autosw").checked = store.get("bz.auto", "1") === "1"; $("autosw").onchange = () => store.set("bz.auto", $("autosw").checked ? "1" : "0");
+let fails = [], busySw = false;
+async function autoSwitch() {
+  if (busySw || store.get("bz.auto", "1") !== "1") return; busySw = true; fails = [];
+  try {
+    const cur = (curWisp && curWisp.use) || wispVal(), off = WOFF(), cands = wsAll().filter(u => u !== cur && !off.includes(u));
+    const res = await Promise.all(cands.map(async u => [u, await probe(u, 7000)])), ok = res.filter(r => r[1]).sort((a, b) => a[1] - b[1]);
+    if (!ok.length) return toast("The Wisp server is slow and no other server answered");
+    const [u, ms] = ok[0]; $("wisp").value = u; store.set("wisp2", u); curWisp = { want: u, use: u }; wispOK = true; setPill("ok", "Connected", "Wisp: " + u);
+    log("info", "wisp", "switched automatically from " + cur + " to " + u + " (" + ms + " ms)");
+    try { await bootSJ(u); } catch (e) {}
+    toast("Switched to " + u.replace(/^wss?:\/\//, "").replace(/\/$/, "") + " (" + ms + " ms)", "Servers", () => libOpen("servers"));
+  } finally { setTimeout(() => { busySw = false; }, 20000); }
+}
+const _log = log;
+log = (lvl, src, msg) => { _log(lvl, src, msg); if (src === "wisp" && lvl === "warn" && /timed out|no answer/i.test(msg) && !/no answer: /.test(msg)) { const n = Date.now(); fails = fails.filter(x => n - x < 60000); fails.push(n); if (fails.length >= 3) autoSwitch(); } };
+render();
 })();
 
 </script>
