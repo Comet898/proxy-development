@@ -6398,6 +6398,7 @@ var LibcurlClient = class {
     if (this.transport)
       libcurl.transport = this.transport;
     libcurl.set_websocket(this.wisp);
+    for (let i = 0; !libcurl.ready && i < 1500; i++) await new Promise((r) => setTimeout(r, 20));
     this.session = new libcurl.HTTPSession({
       proxy: this.proxy
     });
