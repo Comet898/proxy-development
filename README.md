@@ -98,9 +98,20 @@ Notes: downloads in the lite service-worker engine still use the browser's nativ
 * Logs say what happened: JavaScript errors show the page, file and line, "Script error" is explained, HTTP errors say what the status
   means and what breaks, and errors/warnings get an indented "why" line with the likely cause.
 
-## Build 19: minimal, private mode, site permissions
+## Build 20: classic layout, soft palette
 
-* Flat, quiet look: no glass, gradients, moving background or hover lifts. The Wisp status is just a dot (text only when it is down).
-* Private mode (menu, or Ctrl+Shift+P): nothing is recorded (history, downloads, cookies), the browser identity is always masked (also for
-  Google/Discord), and leaving it, closing the page, or restarting after a crash erases all cookies and site data. This also erases normal-mode logins.
-* Site permissions (menu): allow or block camera, microphone, location, autoplay, clipboard and fullscreen per site. Applies on next load.
+* Layout like the original: tab strip, toolbar, bookmarks bar, full-width page. Warm off-white light theme and a soft charcoal dark theme.
+* Downloads, History, Logs, Fullscreen and Settings are buttons beside the address bar; the Wisp dot opens the server list.
+  Pressing a button again closes what it opened. Opening Settings closes Logs and vice versa.
+* Find in page, reader view, the dots menu, private mode and zoom are removed.
+* Site permissions (camera, microphone, location, autoplay, clipboard, fullscreen) per site: Settings > Site permissions.
+* Browser identity now defaults to your real browser, so headers, client hints and navigator agree (what captcha widgets check).
+  Cloudflare and other captcha hosts always use your real identity.
+* Wisp servers: "Remove unreachable" in the server list deletes everything that failed the last Test all.
+
+## Build 21: merged files from the v19 copy
+
+* Added from the other person's v19 copy, unchanged: sj/scramjet.all.js, sj/scramjet.sync.js, sj/scramjet.wasm.wasm, sj/baremux/index.js,
+  sj/baremux/worker.js (the older Scramjet v1 + bare-mux files).
+* from-v19/index-1.html and from-v19/sw-1.js are their page and service worker for that older engine. They are kept apart so they do not
+  replace index.html or sj/sw.js. Their index.html and single.html were identical to v19, so nothing from them needed merging.
