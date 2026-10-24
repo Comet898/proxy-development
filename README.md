@@ -115,3 +115,10 @@ Notes: downloads in the lite service-worker engine still use the browser's nativ
   sj/baremux/worker.js (the older Scramjet v1 + bare-mux files).
 * from-v19/index-1.html and from-v19/sw-1.js are their page and service worker for that older engine. They are kept apart so they do not
   replace index.html or sj/sw.js. Their index.html and single.html were identical to v19, so nothing from them needed merging.
+
+## Build 22: the build-15 look, restored
+
+* The interface is back to the black-and-white build-15 design (pill address bar, Wisp status pill, glow lines on the new tab page).
+  The glass, soft-palette and slim-toolbar layers are removed.
+* Everything functional from later builds stays: bookmarks bar, History/Downloads/Servers as tabs, buttons beside the address bar that
+  close their panel when pressed again, site permissions, descriptive logs.
