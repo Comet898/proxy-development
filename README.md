@@ -122,3 +122,10 @@ Notes: downloads in the lite service-worker engine still use the browser's nativ
   The glass, soft-palette and slim-toolbar layers are removed.
 * Everything functional from later builds stays: bookmarks bar, History/Downloads/Servers as tabs, buttons beside the address bar that
   close their panel when pressed again, site permissions, descriptive logs.
+
+## Build 23
+
+* Tighter top: tabs, toolbar and bookmarks bar are compact.
+* Logs are colour coded again (INFO blue, NET purple, WARN amber, ERR red, status codes coloured) with proper column spacing.
+* Settings redone: grouped sections, switches, one row per option. Wisp servers are managed from the server page.
+* New tab page has Quick launch: Discord, Claude, Google, Spotify, Classroom 6x, GitHub.

@@ -222,6 +222,88 @@ body.embed #bbar,body.embed #bar,body.embed #lib,body.embed #toasts{display:none
 #loglist .why .t,#loglist .why .lv,#loglist .why .s{visibility:hidden}
 #loglist .why .m{color:var(--mut)!important;font-style:italic}
 </style>
+<style id="b22">
+/* ===== build 22b: compact top, colour-coded logs, new settings, quick launch ===== */
+/* compact chrome */
+#tabs{padding:5px 8px 0;gap:3px}
+.tab{height:30px;width:190px;padding:0 6px 0 10px;border-radius:9px 9px 0 0;font-size:13px}
+#newtab{width:26px;height:26px;margin:0 0 2px 2px}
+#toolbar{gap:2px;padding:4px 8px 5px}
+.ib{width:30px;height:30px;border-radius:9px}
+.ib.sm{width:24px;height:24px}
+#ob{margin:0 6px}
+#omni{height:32px;padding:0 38px 0 34px;border-radius:16px;font-size:13.5px}
+#lock{left:12px}
+#star{width:26px;height:26px;right:3px}
+#sug{top:38px}#bmpop{top:38px}
+#pill{height:26px;padding:0 10px;margin-left:2px}
+#dlbtn{margin-left:6px}
+#dlbtn::before{content:"";position:absolute;left:-4px;top:8px;bottom:8px;width:1px;background:var(--bd)}
+#bbar{padding:2px 10px 3px;gap:2px}
+#bbar button,#bbar .bm{height:24px;border-radius:7px;font-size:12.5px}
+#bbar .bm{padding:0 9px 0 5px;gap:6px}
+#bbar .fav{width:16px;height:16px;border-radius:5px;font-size:10px}
+#status{padding:3px 12px;font-size:12px}
+#settings{top:80px}
+
+/* logs: colour coded, columns spaced */
+:root{--c-info:#6aa3ff;--c-src:#9b9b9b;--c-net:#a78bfa;--c-ok:#3fb27f;--c-warn:#e0a83c;--c-err:#ef6a5a}
+:root[data-theme=light]{--c-info:#2563eb;--c-src:#777;--c-net:#7c4dff;--c-ok:#16885c;--c-warn:#b7791f;--c-err:#d1392b}
+#logs{left:12px;right:12px;bottom:12px;height:42vh;border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:var(--sh)}
+#logbar{padding:8px 12px;gap:8px}
+#loglist{padding:6px 8px;font:12px/1.6 "JetBrains Mono","Cascadia Code",ui-monospace,Consolas,Menlo,monospace}
+#loglist div{display:grid;grid-template-columns:96px 52px 62px minmax(0,1fr);gap:10px;align-items:baseline;padding:2px 8px;border:0;border-left:3px solid transparent;border-radius:6px;white-space:normal;word-break:normal}
+#loglist div:hover{background:var(--surf)}
+#loglist .t{color:var(--mut);font-variant-numeric:tabular-nums}
+#loglist .lv{justify-self:start;padding:0 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.05em;line-height:17px;color:var(--c-info);background:color-mix(in srgb,var(--c-info) 16%,transparent)}
+#loglist .s{color:var(--c-src);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#loglist .m{color:var(--fg);white-space:pre-wrap;word-break:break-word}
+#loglist .u{color:var(--c-info)}
+#loglist .mt{color:var(--c-net);font-weight:700}
+#loglist .c2{color:var(--c-ok);font-weight:700}#loglist .c3{color:var(--c-warn);font-weight:700}#loglist .c4{color:var(--c-err);font-weight:700}
+#loglist .net{border-left-color:color-mix(in srgb,var(--c-net) 70%,transparent)}
+#loglist .net .lv{color:var(--c-net);background:color-mix(in srgb,var(--c-net) 16%,transparent)}
+#loglist .net .m{color:var(--fg)}
+#loglist .info{border-left-color:color-mix(in srgb,var(--c-info) 55%,transparent)}
+#loglist .warn{border-left-color:var(--c-warn);background:color-mix(in srgb,var(--c-warn) 9%,transparent)}
+#loglist .warn .lv{color:var(--c-warn);background:color-mix(in srgb,var(--c-warn) 20%,transparent)}
+#loglist .warn .m{color:var(--c-warn)}
+#loglist .error{border-left-color:var(--c-err);background:color-mix(in srgb,var(--c-err) 10%,transparent)}
+#loglist .error .lv{color:#fff;background:var(--c-err)}
+#loglist .error .m{color:var(--c-err)}
+#loglist .error .u,#loglist .warn .u{color:inherit;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
+#loglist .why{padding-top:0;background:transparent!important}
+#loglist .why .m{color:var(--mut)!important;font-style:italic}
+@media(max-width:640px){#loglist div{grid-template-columns:1fr;gap:0}#logs{left:8px;right:8px;bottom:8px;height:60vh}}
+
+/* settings: grouped rows, switches */
+#settings{width:min(400px,100%);background:var(--bg);border-radius:0 0 0 14px;overflow-y:auto}
+#settings .sh{padding:14px 18px 8px;border:0;background:transparent}
+#settings .sh h3{margin:0;font-size:17px;font-weight:650;letter-spacing:-.01em}
+#settings section{display:flex;flex-direction:column;gap:10px;padding:14px 18px;border:0;border-top:1px solid var(--bd)}
+#settings h4{margin:0 0 2px;font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+#settings label{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:14px;font-size:13.5px;color:var(--fg)}
+#settings label select,#settings label input[type=text]{width:180px;height:32px;padding:0 10px;border:1px solid var(--bd);border-radius:10px;background:var(--surf);color:var(--fg);outline:none}
+#settings label textarea{width:100%}
+#settings label select:focus,#settings label input[type=text]:focus{border-color:var(--fg)}
+#settings label.chk{flex-direction:row-reverse;cursor:pointer}
+#settings input[type=checkbox]{-webkit-appearance:none;appearance:none;flex:none;position:relative;width:36px;height:21px;margin:0;border:0;border-radius:11px;background:var(--bd);cursor:pointer;transition:background .2s}
+#settings input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
+#settings input[type=checkbox]:checked{background:var(--fg)}
+#settings input[type=checkbox]:checked::after{transform:translateX(15px)}
+#settings .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+#settings [hidden]{display:none!important}
+#settings .hint{margin:0;font-size:12px;line-height:1.5;color:var(--mut)}
+#settings details summary{cursor:pointer;color:var(--mut);font-size:12.5px}
+
+/* new tab: quick launch */
+#quick{grid-template-columns:repeat(auto-fill,96px);gap:6px 8px;width:min(660px,100%)}
+#quick .ql{grid-column:1/-1;text-align:center;margin:2px 0 4px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+#quick .tile{height:auto;padding:12px 4px 10px;border:0;border-radius:16px;background:transparent;color:var(--fg);transition:background .18s,transform .18s}
+#quick .tile:hover{background:var(--surf);transform:translateY(-2px)}
+#quick .tile i{width:46px;height:46px;border-radius:14px;font-size:18px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+#quick .tile span{font-size:12px}
+</style>
 </head>
 <body>
 <div id="tabs"><div id="tablist"></div><button id="newtab" class="ib" title="New tab" aria-label="New tab"></button></div>
@@ -239,12 +321,12 @@ body.embed #bbar,body.embed #bar,body.embed #lib,body.embed #toasts{display:none
     <div class="sh"><h3>Settings</h3><button id="setclose" class="ib" aria-label="Close settings"></button></div>
     <section><h4>Browsing</h4>
       <label>Search engine <select id="engine"></select></label>
-      <label>Engine <select id="mode"><option value="auto">Auto</option><option value="sj">Scramjet v2 (best compatibility, needs https or localhost)</option><option value="sw">Lite service worker (needs localhost or https)</option><option value="hosted">Hosted engine (your GitHub Pages link)</option><option value="direct">Single-file (works from file://)</option></select></label>
-      <label>Browser identity <select id="ua"><option value="win">Chrome 141 on Windows</option><option value="mac">Chrome 141 on macOS</option><option value="linux">Chrome 141 on Linux</option><option value="off">Do not spoof</option></select></label>
-      <label class="chk"><input id="guard" type="checkbox"> Ask before closing this tab</label>
+      <label>Engine <select id="mode"><option value="auto">Auto</option><option value="sj">Scramjet v2</option><option value="sw">Lite worker</option><option value="hosted">Hosted engine</option><option value="direct">Single file</option></select></label>
+      <label>Browser identity <select id="ua"><option value="off">My browser</option><option value="win">Chrome, Windows</option><option value="mac">Chrome, macOS</option><option value="linux">Chrome, Linux</option></select></label>
+      <label class="chk"><input id="guard" type="checkbox"> Ask before closing a tab</label>
     </section>
     <section><h4>Connection</h4>
-      <label>Transport <select id="transport"><option value="auto">Auto: epoxy, then libcurl if a site fails (default)</option><option value="epoxy">epoxy only</option><option value="libcurl">libcurl only</option></select></label>
+      <label>Transport <select id="transport"><option value="auto">Auto</option><option value="epoxy">epoxy only</option><option value="libcurl">libcurl only</option></select></label>
       <label>Preferred Wisp server <input id="wisp" type="text" placeholder="wss://your-server.onrender.com/" spellcheck="false"></label>
       <label>Fallback servers, one per line <textarea id="wisplist" rows="4" spellcheck="false"></textarea></label>
       <div class="row"><button id="testwisp" class="btn">Test connection</button><span id="wispnote"></span></div>
@@ -8932,7 +9014,7 @@ function theme() {
 }
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", theme);
 const st = $("settings");
-st.querySelector(".sh").insertAdjacentHTML("afterend", '<section><h4>Appearance</h4><p class="hint">Build 22</p><label>Theme <select id="theme"><option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></label><label class="chk"><input id="bbarchk" type="checkbox"> Show bookmarks bar</label></section><section><h4>Downloads</h4><label class="chk"><input id="dlm" type="checkbox"> Manage downloads in this browser</label><label class="chk"><input id="dla" type="checkbox"> Save files automatically when they finish</label><p class="hint">Managed downloads show progress in the Downloads panel and can be saved again without reloading the page.</p></section>');
+st.querySelector(".sh").insertAdjacentHTML("afterend", '<section><h4>Appearance</h4><label>Theme <select id="theme"><option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></label><label class="chk"><input id="bbarchk" type="checkbox"> Show bookmarks bar</label></section><section><h4>Downloads</h4><label class="chk"><input id="dlm" type="checkbox"> Manage downloads in this browser</label><label class="chk"><input id="dla" type="checkbox"> Save files automatically when they finish</label><p class="hint">Managed downloads show progress in the Downloads panel and can be saved again without reloading the page.</p></section>');
 $("theme").value = store.get("bz.theme", "auto"); $("theme").onchange = () => { store.set("bz.theme", $("theme").value); theme(); };
 for (const [id, k, d] of [["bbarchk", "bz.bbar18", "1"], ["dlm", "bz.dlm", "0"], ["dla", "bz.dla", "1"]]) { $(id).checked = store.get(k, d) === "1"; $(id).onchange = () => { store.set(k, $(id).checked ? "1" : "0"); drawBbar(); }; }
 /* the Wisp fields move into the server manager; the inputs stay as the data store */
@@ -9214,7 +9296,9 @@ sug.addEventListener("mousedown", e => { e.preventDefault(); const d = e.target.
 /* ---- new tab page ---- */
 function renderNtp() {
   const h = new Date().getHours(); $("ntp").querySelector("h1").textContent = h < 5 ? "Still up?" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; $("quick").textContent = "";
-  BM.slice(0, 8).forEach(b => { const x = document.createElement("button"); x.className = "tile"; x.title = b.u; x.innerHTML = letter(b.u, b.t) + "<span>" + esc(b.t) + "</span>"; x.onclick = () => go(active, b.u); $("quick").append(x); });
+  const APPS = [["Discord", "https://discord.com/app", "#5865f2", "D"], ["Claude", "https://claude.ai/login", "#d97757", "C"], ["Google", "https://accounts.google.com/", "#4285f4", "G"], ["Spotify", "https://open.spotify.com/", "#1db954", "S"], ["Classroom 6x", "https://sites.google.com/view/classroom6x/", "#8b5cf6", "6x"], ["GitHub", "https://github.com/", "#30363d", "GH"]];
+  $("quick").insertAdjacentHTML("beforeend", '<span class="ql">Quick launch</span>');
+  APPS.forEach(([n, u, c, g]) => { const x = document.createElement("button"); x.className = "tile"; x.title = u; x.innerHTML = '<i style="background:' + c + '">' + g + '</i><span>' + n + '</span>'; x.onclick = () => go(active, u); $("quick").append(x); });
 }
 if (!$("trail")) $("ntp").insertAdjacentHTML("afterbegin", '<svg id="trail" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M-40 560C200 430 330 640 560 480S860 150 1240 250" stroke-width="2.5"/><path d="M-40 200C240 330 420 60 700 190S1000 560 1240 420" stroke-width="2"/><path d="M-40 360C160 120 460 420 640 300S980 110 1240 90" stroke-width="1.6"/></svg>');
 $("ntpq").placeholder = "Search the web or enter an address";
@@ -9232,7 +9316,7 @@ document.addEventListener("keydown", e => {
 }, true);
 
 window.UI = { toast, wsAll, hn, hue, web };
-log("info", "app", "build 18 started"); theme(); badge(); drawBbar(); newTab();
+log("info", "app", "build 23 started"); theme(); badge(); drawBbar(); newTab();
 })();
 
 </script>
@@ -9402,6 +9486,13 @@ render();
   $("cleardata").parentElement.insertAdjacentHTML("afterbegin", '<button id="permbtn" class="btn">Site permissions</button>');
   $("permbtn").onclick = e => { e.stopPropagation(); $("settings").hidden = true; setTimeout(sitePerms, 0); };
   const g = window.go; window.go = function (t, input, ...r) { try { const h = host(resolve(String(input || ""))); if (h && t.frame) t.frame.setAttribute("allow", allowFor(h)); } catch (e) {} return g(t, input, ...r); };
+})();
+</script>
+<script>
+(function () {
+  const st = document.getElementById("settings");
+  ["Appearance", "Browsing", "Connection", "Downloads", "Hosted site", "Troubleshooting"].forEach(n => { const sec = [...st.querySelectorAll("section")].find(x => { const h = x.querySelector("h4"); return h && h.textContent === n; }); if (sec) st.append(sec); });
+  const t = [...st.querySelectorAll("h4")].find(h => h.textContent === "Troubleshooting"); if (t) t.textContent = "Maintenance";
 })();
 </script>
 </body>
