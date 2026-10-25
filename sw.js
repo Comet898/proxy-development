@@ -239,16 +239,21 @@ async function cookieApi(req, u) {
   return new Response(cookieHeader(real, true));
 }
 
-self.addEventListener("fetch", e => {
-  const u = new URL(e.request.url);
-  if (u.origin !== location.origin || !u.pathname.startsWith(P)) return;
-  if (u.pathname === P + "__cookie") return e.respondWith(cookieApi(e.request, u));
-  if (u.pathname === P + "__ping") return e.respondWith(new Response("ok", { headers: { "cache-control": "no-store" } }));
-  let target = decodeURIComponent(u.pathname.slice(P.length));
-  if (!/^[a-z][a-z0-9+.-]*:/i.test(target)) {
-    const base = unpx(e.request.referrer);
-    if (!base) return e.respondWith(new Response("Bad proxy URL", { status: 400 }));
-    try { target = new URL(target + u.search, base).href; } catch { return e.respondWith(new Response("Bad proxy URL", { status: 400 })); }
+const TAG = /<(link|script)\b[^>]*>/gi;
+const INTEGRITY = /\s+integrity\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
+async function stripIntegrity(res) {
+  try {
+    if (res.status !== 200 || !/text\/html/i.test(res.headers.get("content-type") || "")) return res;
+    const text = await res.clone().text();
+    const h = new Headers(res.headers);
+    h.delete("content-length");
+    h.delete("content-encoding");
+    return new Response(text.replace(TAG, (t) => t.replace(INTEGRITY, "")), { status: 200, statusText: res.statusText, headers: h });
+  } catch (e) { return res; }
+}
+
+addEventListener("fetch", (event) => {
+  if ($scramjetController.shouldRoute(event)) {
+    event.respondWith(withBody(event).then((ev) => $scramjetController.route(ev)).then(stripIntegrity));
   }
-  e.respondWith(handle(e.request, target));
 });
