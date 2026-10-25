@@ -175,7 +175,7 @@ function shimMain(P, CK) {
   }, WSC);
   const W = window.Worker; if (W) window.Worker = class extends W { constructor(u, o) { super(px(String(u)), o); } };
   for (const k of ["pushState", "replaceState"]) { const f = history[k]; history[k] = function (s, t, u) { return f.call(this, s, t, u ? px(String(u)) : u); }; }
-  const sa = Element.prototype.setAttribute; Element.prototype.setAttribute = function (n, v) { if (/^(src|href|action|poster)$/i.test(n)) v = px(String(v)); return sa.call(this, n, v); };
+  const sa = Element.prototype.setAttribute; Element.prototype.setAttribute = function (n, v) { if (/^(crossorigin|integrity)$/i.test(n)) return; if (/^(src|href|action|poster)$/i.test(n)) v = px(String(v)); return sa.call(this, n, v); };
   for (const [C, p] of [[HTMLScriptElement, "src"], [HTMLImageElement, "src"], [HTMLIFrameElement, "src"], [HTMLLinkElement, "href"], [HTMLAnchorElement, "href"], [HTMLSourceElement, "src"], [HTMLMediaElement, "src"], [HTMLFormElement, "action"]]) {
     const d = Object.getOwnPropertyDescriptor(C.prototype, p);
     if (d && d.set) Object.defineProperty(C.prototype, p, { get: d.get, set(v) { d.set.call(this, px(String(v))); }, configurable: true });
@@ -190,7 +190,7 @@ const rewriteHtml = (html, base) => {
     .replace(/<base\b[^>]*>/gi, "")
     .replace(/(<script\b(?![^>]*\bsrc\s*=)[^>]*>)([\s\S]*?)(<\/script>)/gi, (m, a, js, c) =>
       /type\s*=\s*["']?(application\/(ld\+)?json|text\/template|importmap|speculationrules)/i.test(a) ? m : a + rewriteJs(js) + c)
-    .replace(/<[a-zA-Z][^>]*>/g, tag => tag.replace(/\s(integrity|nonce)=("[^"]*"|'[^']*')/gi, "").replace(ATTR, (m, a, q, v) => `${a}=${q}${px(v, base)}${q}`))
+    .replace(/<[a-zA-Z][^>]*>/g, tag => tag.replace(/\s(integrity|nonce|crossorigin)(=("[^"]*"|'[^']*'|[^\s>]+))?(?=[\s>\/])/gi, "").replace(ATTR, (m, a, q, v) => `${a}=${q}${px(v, base)}${q}`))
     .replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi, (m, a, css, c) => a + rewriteCss(css, base) + c);
   return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + shimTag(cookieHeader(base, true))) : shimTag(cookieHeader(base, true)) + html;
 };
@@ -211,15 +211,21 @@ async function handle(req, target) {
     for (const c of (r.headers.getSetCookie ? r.headers.getSetCookie() : splitCookies(r.headers.get("set-cookie")))) setCookie(c, target);
     const out = new Headers();
     for (const [k, v] of r.headers) {
-      if (/^(content-security-policy.*|x-frame-options|content-encoding|content-length|set-cookie|transfer-encoding|location)$/i.test(k)) continue;
+      if (/^(content-security-policy.*|x-frame-options|content-encoding|content-length|set-cookie|transfer-encoding|location|access-control-.*|cross-origin-.*|x-content-type-options|timing-allow-origin|report-to|nel|permissions-policy)$/i.test(k)) continue;
       try { out.set(k, v); } catch {}
     }
+    out.set("access-control-allow-origin", "*");
+    out.set("access-control-allow-headers", "*");
+    out.set("access-control-expose-headers", "*");
     out.set("x-hz-ck", encodeURIComponent(cookieHeader(ref || target, true)));
     const loc = r.headers.get("location");
     if (r.status >= 300 && r.status < 400 && loc) { out.set("location", px(loc, target)); return new Response(null, { status: r.status, headers: out }); }
     const type = r.headers.get("content-type") || "";
     if (/html/i.test(type)) return new Response(rewriteHtml(await r.text(), target), { status: r.status, headers: out });
-    if (/text\/css/i.test(type)) return new Response(rewriteCss(await r.text(), target), { status: r.status, headers: out });
+    if (/text\/css/i.test(type) || req.destination === "style") {
+      out.set("content-type", "text/css; charset=utf-8");
+      return new Response(rewriteCss(await r.text(), target), { status: r.status, headers: out });
+    }
     if (/javascript|ecmascript/i.test(type) || req.destination === "script")
       return new Response(rewriteJs(await r.text()), { status: r.status, headers: out });
     return new Response(await r.arrayBuffer(), { status: r.status, headers: out });
