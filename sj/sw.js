@@ -1,7 +1,18 @@
-/* Scramjet v2 service worker.
-   controller.sw.js registers the install/activate handlers and exposes
-   $scramjetController.shouldRoute(event) / route(event). */
-importScripts("controller/controller.sw.js");
+/* remove integrity="..." from proxied HTML: Scramjet rewrites CSS/JS, so the hashes never match */
+const INTEGRITY_TAG = /<(?:link|script)\b[^>]*>/gi;
+const INTEGRITY_ATTR = /\s+integrity\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
+async function stripIntegrity(res) {
+  try {
+    if (!res || res.status !== 200 || !/text\/html/i.test(res.headers.get("content-type") || "")) return res;
+    const text = await res.clone().text();
+    const h = new Headers(res.headers);
+    h.delete("content-length");
+    h.delete("content-encoding");
+    return new Response(text.replace(INTEGRITY_TAG, (t) => t.replace(INTEGRITY_ATTR, "")), { status: 200, statusText: res.statusText, headers: h });
+  } catch (e) { return res; }
+}
+const __route = $scramjetController.route.bind($scramjetController);
+$scramjetController.route = async (ev) => stripIntegrity(await __route(ev));
 
 /* tell open pages that this worker just (re)started, so they can hand it their message port again */
 try { new BroadcastChannel("hz-sj").postMessage({ type: "sw-start" }); } catch (e) {}
