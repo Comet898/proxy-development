@@ -1,6 +1,16 @@
-/* remove integrity="..." from proxied HTML: Scramjet rewrites CSS/JS, so the hashes never match */
-const INTEGRITY_TAG = /<(?:link|script)\b[^>]*>/gi;
-const INTEGRITY_ATTR = /\s+integrity\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
+/* Scramjet v2 service worker.
+   controller.sw.js registers the install/activate handlers and exposes
+   $scramjetController.shouldRoute(event) / route(event). */
+importScripts("controller/controller.sw.js");
+
+/* remove integrity (and crossorigin on stylesheets) from proxied HTML: the rewritten CSS/JS never matches the original hash */
+const TAG_RE = /<(?:link|script)\b[^>]*>/gi;
+const INTEGRITY_RE = /\s+integrity(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?(?=[\s>\/])/gi;
+const CROSSORIGIN_RE = /\s+crossorigin(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?(?=[\s>\/])/gi;
+const cleanTag = (t) => {
+  t = t.replace(INTEGRITY_RE, "");
+  return /^<link\b/i.test(t) && /\brel\s*=\s*["']?stylesheet/i.test(t) ? t.replace(CROSSORIGIN_RE, "") : t;
+};
 async function stripIntegrity(res) {
   try {
     if (!res || res.status !== 200 || !/text\/html/i.test(res.headers.get("content-type") || "")) return res;
@@ -8,7 +18,7 @@ async function stripIntegrity(res) {
     const h = new Headers(res.headers);
     h.delete("content-length");
     h.delete("content-encoding");
-    return new Response(text.replace(INTEGRITY_TAG, (t) => t.replace(INTEGRITY_ATTR, "")), { status: 200, statusText: res.statusText, headers: h });
+    return new Response(text.replace(TAG_RE, cleanTag), { status: 200, statusText: res.statusText, headers: h });
   } catch (e) { return res; }
 }
 const __route = $scramjetController.route.bind($scramjetController);
