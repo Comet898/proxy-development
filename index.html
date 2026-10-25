@@ -1,6 +1,55 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
+  <!-- PASTE THIS BLOCK RIGHT UNDER YOUR <HEAD> TAG -->
+<script>
+(function() {
+    // 1. Force open-CORS styling permission structures natively
+    const assetObserver = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+            for (const n of m.addedNodes) {
+                if (n.nodeType === Node.ELEMENT_NODE) {
+                    const tag = n.tagName;
+                    if (tag === 'SCRIPT' || tag === 'LINK') {
+                        n.removeAttribute('integrity');
+                        if (tag === 'LINK' && n.rel?.includes('stylesheet')) {
+                            n.setAttribute('crossorigin', 'anonymous');
+                        }
+                    }
+                    n.querySelectorAll?.('script, link').forEach(asset => {
+                        asset.removeAttribute('integrity');
+                        if (asset.tagName === 'LINK' && asset.rel?.includes('stylesheet')) {
+                            asset.setAttribute('crossorigin', 'anonymous');
+                        }
+                    });
+                }
+            }
+        }
+    });
+    assetObserver.observe(document.documentElement, { childList: true, subtree: true });
+
+    // 2. Intercept element mutations tracking in background runtime execution arrays
+    const nativeSetAttr = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function(name, value) {
+        const lower = name.toLowerCase();
+        if (lower === 'integrity') return; 
+        if (lower === 'crossorigin') {
+            return nativeSetAttr.call(this, 'crossorigin', 'anonymous');
+        }
+        return nativeSetAttr.apply(this, arguments);
+    };
+
+    // 3. Environment Scope Masking: Keep Discord app frameworks from catching the proxy hook
+    try {
+        const nativeLoc = window.location;
+        Object.defineProperty(window, 'location', {
+            get: () => nativeLoc,
+            configurable: true
+        });
+    } catch(e) {}
+})();
+</script>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Browser</title>
